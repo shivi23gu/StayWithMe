@@ -10,7 +10,12 @@ const Footer = () => {
 
         {/* Brand Column */}
         <div className="max-w-[340px]">
-          <img src={assets.logo} alt="logo" className="mb-4 h-8 md:h-9 invert opacity-80" />
+
+          <img 
+            src={assets.logo} 
+            alt="logo" 
+            className="mb-4 h-8 md:h-9 brightness-0" 
+          />
 
           <p className="text-sm leading-relaxed">
             Discover the world's most extraordinary places to stay, from boutique
@@ -18,10 +23,10 @@ const Footer = () => {
           </p>
 
           <div className="flex items-center gap-4 mt-5">
-            <img src={assets.instagramIcon} alt="" className="w-5 hover:opacity-70 cursor-pointer" />
-            <img src={assets.facebookIcon} alt="" className="w-5 hover:opacity-70 cursor-pointer" />
-            <img src={assets.twitterIcon} alt="" className="w-5 hover:opacity-70 cursor-pointer" />
-            <img src={assets.linkendinIcon} alt="" className="w-5 hover:opacity-70 cursor-pointer" />
+            <img src={assets.instagramIcon} alt="instagram" className="w-5 hover:opacity-70 cursor-pointer" />
+            <img src={assets.facebookIcon} alt="facebook" className="w-5 hover:opacity-70 cursor-pointer" />
+            <img src={assets.twitterIcon} alt="twitter" className="w-5 hover:opacity-70 cursor-pointer" />
+            <img src={assets.linkendinIcon} alt="linkedin" className="w-5 hover:opacity-70 cursor-pointer" />
           </div>
         </div>
 

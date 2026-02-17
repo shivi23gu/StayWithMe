@@ -30,7 +30,7 @@ const Testimonial = () => {
   ];
 
   return (
-    <div className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 pt-20 pb-24">
+    <div className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 pt-20 pb-32">
       <Title
         title={"What Our Guests Say"}
         subTitle={
@@ -38,26 +38,42 @@ const Testimonial = () => {
         }
       />
 
-      <div className="flex flex-wrap items-center justify-center gap-6 pt-14">
+      {/* FIXED: 
+          1. Added 'gap-y-24' to provide vertical space for wrapped cards.
+          2. Added 'pt-24' to give the first row of cards room for the floating images.
+      */}
+      <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-24 pt-24">
         {testimonials.map((t, index) => (
           <div
             key={index}
-            className="text-sm w-80 border border-gray-200 pb-6 rounded-lg bg-white shadow-[0px_4px_15px_0px] shadow-black/5"
+            className="text-sm w-80 border border-gray-200 pb-8 rounded-xl bg-white shadow-[0px_4px_20px_0px_rgba(0,0,0,0.05)] relative"
           >
-            <div className="flex flex-col items-center px-5 py-4 relative">
+            <div className="flex flex-col items-center px-5 relative">
+              {/* IMAGE FIX: 
+                  - Added border-4 border-white to make it stand out.
+                  - Added object-cover to prevent stretching.
+              */}
               <img
-                className="h-24 w-24 absolute -top-14 rounded-full"
+                className="h-28 w-28 absolute -top-14 rounded-full border-4 border-white shadow-md object-cover"
                 src={t.image}
-                alt={`guestImage${index + 1}`}
+                alt={t.name}
               />
-              <div className="pt-8 text-center">
-                <h1 className="text-lg font-medium text-gray-800">{t.name}</h1>
-                <p className="text-gray-800/80">{t.role}</p>
+              
+              {/* TEXT FIX: 
+                  - Increased padding-top (pt-16) so the name starts below the image.
+              */}
+              <div className="pt-16 pb-4 text-center">
+                <h1 className="text-lg font-semibold text-gray-800">{t.name}</h1>
+                <p className="text-gray-500 font-medium">{t.role}</p>
               </div>
             </div>
-            <p className="text-gray-500 px-6 text-center">{t.review}</p>
-            <div className="flex justify-center pt-4">
-              <div className="flex gap-0.5">
+
+            <p className="text-gray-600 px-8 text-center leading-relaxed italic">
+              "{t.review}"
+            </p>
+
+            <div className="flex justify-center pt-6">
+              <div className="flex gap-1">
                 {[...Array(5)].map((_, starIndex) => (
                   <svg
                     key={starIndex}

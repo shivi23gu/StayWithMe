@@ -1,30 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { assets } from "../assets/assets.js";
-import { useEffect, useState } from "react";
 import { useClerk, useUser, UserButton } from "@clerk/clerk-react";
 
 /* ---------------- ICON ---------------- */
-
 const BookIcon = () => (
-  <svg
-    className="w-4 h-4"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4"
-    />
+  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4" />
   </svg>
 );
 
 /* ---------------- NAVBAR ---------------- */
-
 const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
@@ -41,39 +27,50 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /* -------- SCROLL EFFECT -------- */
+  /* -------- SCROLL & LOCATION EFFECT -------- */
   useEffect(() => {
-    if (location.pathname !== "/") {
-      setIsScrolled(true);
-      return;
-    } else {
-      setIsScrolled(false);
-    }
-    setIsScrolled((prev) => (location.pathname !== "/" ? true : prev));
+    const checkState = () => {
+      // If not on Home page, Navbar is always white/scrolled
+      if (location.pathname !== "/") {
+        setIsScrolled(true);
+      } else {
+        // On Home page, base it on actual scroll position
+        setIsScrolled(window.scrollY > 50);
+      }
+    };
+
+    // Run immediately on page load/change to prevent Dashboard delay
+    checkState();
 
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (location.pathname === "/") {
+        setIsScrolled(window.scrollY > 50);
+      }
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    // Dependency array must include location.pathname to update instantly on navigation
+  }, [location.pathname]);
 
   return (
     <nav
       className={`fixed top-0 left-0 w-full flex items-center justify-between 
       px-8 md:px-16 lg:px-24 xl:px-32 z-50 transition-all duration-500
-      ${
-        isScrolled
-          ? "bg-white/80 shadow-md text-gray-700 backdrop-blur-lg py-3"
-          : "bg-transparent text-white py-5"
-      }`}
+      ${isScrolled 
+        ? "bg-white/95 shadow-md text-gray-700 backdrop-blur-lg py-2" 
+        : "bg-transparent text-white py-4"}`}
     >
       {/* -------- LOGO -------- */}
-      <Link to="/">
+      <Link to="/" className="flex items-center">
         <img
           src={assets.logo}
           alt="logo"
-          className={`h-8 md:h-10 ${isScrolled ? "" : "invert"}`}
+          // Size reduced to h-10 to prevent overlap with hero badge
+          className={`h-8 md:h-10 w-auto object-contain transition-all duration-300 ${
+            isScrolled ? "brightness-0" : "brightness-0 invert"
+          }`}
         />
       </Link>
 
@@ -83,22 +80,19 @@ const Navbar = () => {
           <Link
             key={i}
             to={link.path}
-            className={`group flex flex-col ${
-              isScrolled ? "text-gray-700" : "text-white"
-            }`}
+            className={`group flex flex-col font-medium ${isScrolled ? "text-gray-700" : "text-white"}`}
           >
             {link.name}
-            <span
-              className={`h-0.5 w-0 group-hover:w-full transition-all duration-300
-              ${isScrolled ? "bg-gray-700" : "bg-white"}`}
-            />
+            <span className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 ${isScrolled ? "bg-gray-700" : "bg-white"}`} />
           </Link>
         ))}
 
         {user && (
           <button
             onClick={() => navigate("/owner")}
-            className="border px-4 py-1 rounded-full text-sm"
+            className={`border px-4 py-1 rounded-full text-sm transition-all ${
+              isScrolled ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
+            }`}
           >
             Dashboard
           </button>
@@ -110,24 +104,21 @@ const Navbar = () => {
         <img
           src={assets.searchIcon}
           alt="search"
-          className={`${isScrolled ? "invert" : ""} h-7`}
+          className={`h-5 cursor-pointer ${isScrolled ? "" : "invert"}`}
         />
 
         {user ? (
-          <UserButton>
+          <UserButton afterSignOutUrl="/">
             <UserButton.MenuItems>
-              <UserButton.Action
-                label="My Bookings"
-                labelIcon={<BookIcon />}
-                onClick={() => navigate("/my-bookings")}
-              />
+              <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => navigate("/my-bookings")} />
             </UserButton.MenuItems>
           </UserButton>
         ) : (
           <button
             onClick={openSignIn}
-            className={`px-8 py-2.5 rounded-full
-            ${isScrolled ? "bg-black text-white" : "bg-white text-black"}`}
+            className={`px-8 py-2 rounded-full font-medium transition-all ${
+              isScrolled ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"
+            }`}
           >
             Login
           </button>
@@ -136,59 +127,46 @@ const Navbar = () => {
 
       {/* -------- MOBILE MENU BUTTON -------- */}
       <button className="md:hidden" onClick={() => setIsMenuOpen(true)}>
-        <img
-          src={assets.menuIcon}
-          alt="menu"
-          className={`${isScrolled ? "invert" : ""} h-5`}
-        />
+        <img src={assets.menuIcon} alt="menu" className={`h-6 ${isScrolled ? "" : "invert"}`} />
       </button>
+{/* -------- MOBILE MENU OVERLAY -------- */}
+<div
+  className={`fixed top-0 left-0 w-full h-screen bg-white flex flex-col items-center justify-center gap-6 md:hidden transition-transform duration-500 z-[60]
+  ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+>
+  <button className="absolute top-6 right-8" onClick={() => setIsMenuOpen(false)}>
+    {/* Explicitly making close icon visible */}
+    <img src={assets.closeIcon} alt="close" className="h-8 brightness-0" />
+  </button>
 
-      {/* -------- MOBILE MENU -------- */}
-      <div
-        className={`fixed top-0 left-0 w-full h-screen bg-white flex flex-col
-        items-center justify-center gap-6 md:hidden transition-transform duration-500
-        ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        {/* Close */}
-        <button
-          className="absolute top-4 right-4"
-          onClick={() => setIsMenuOpen(false)}
-        >
-          <img src={assets.closeIcon} alt="close" className="h-6" />
-        </button>
+  {navLinks.map((link, i) => (
+    <Link 
+      key={i} 
+      to={link.path} 
+      className="text-black text-2xl font-bold" // Changed to text-black and font-bold
+      onClick={() => setIsMenuOpen(false)}
+    >
+      {link.name}
+    </Link>
+  ))}
 
-        {navLinks.map((link, i) => (
-          <Link
-            key={i}
-            to={link.path}
-            className="text-gray-800 text-xl font-medium"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            {link.name}
-          </Link>
-        ))}
-
-        {user && (
-          <button
-            className="border px-4 py-1 rounded-full"
-            onClick={() => {
-              setIsMenuOpen(false);
-              navigate("/owner");
-            }}
-          >
-            Dashboard
-          </button>
-        )}
-
-        {!user && (
-          <button
-            onClick={openSignIn}
-            className="bg-black text-white px-8 py-2.5 rounded-full"
-          >
-            Login
-          </button>
-        )}
-      </div>
+  {/* FIXED TERNARY OPERATOR FOR MOBILE VISIBILITY */}
+  {user ? (
+    <button 
+      className="border-2 border-black px-6 py-2 rounded-full font-bold text-black" // Added text-black
+      onClick={() => { setIsMenuOpen(false); navigate("/owner"); }}
+    >
+      Dashboard
+    </button>
+  ) : (
+    <button 
+      onClick={() => { setIsMenuOpen(false); openSignIn(); }} 
+      className="bg-black text-white px-10 py-3 rounded-full font-bold"
+    >
+      Login
+    </button>
+  )}
+</div>
     </nav>
   );
 };
