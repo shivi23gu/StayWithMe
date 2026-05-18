@@ -5,6 +5,7 @@ import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/clerk-react'
 
+// Vite requires the VITE_ prefix to expose variables to the client-side code.
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
 if (!PUBLISHABLE_KEY) {
@@ -15,8 +16,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ClerkProvider 
       publishableKey={PUBLISHABLE_KEY} 
-      // Corrected props to remove deprecation warnings
-      forceRedirectUrl="/my-bookings"
+      afterSignOutUrl="/"
     >
       <BrowserRouter> 
         <App />
