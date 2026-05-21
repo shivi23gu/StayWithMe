@@ -1,18 +1,26 @@
-import User from "../models/User.js"; // Ensure your User model is imported
+import User from "../models/User.js";
 
-// GET /api/user/
 export const getUserData = async (req, res) => {
     try {
-        const user = await User.findById(req.userId);
+        // FIX: req.userId use karo (authMiddleware yahi set karta hai)
+        const user = await User.findOne({ _id: req.userId });
 
-        // FIX: Agar user database mein nahi bhi mila, toh crash mat karo, testing ke liye fake account object bhej do
         if (!user) {
-            console.log(`Testing Mode: User ${req.userId} not found in DB, sending mock data.`);
             return res.json({ 
                 success: true, 
-                role: "user", // Default role taaki register form khul sake
+                role: "user",
                 recentSearchedCities: [] 
             });
+        }
+
+        // FIX: Check karo hotel bhi exist karta hai ya nahi
+        const { Hotel } = await import("../models/Hotel.js");
+        const hotel = await Hotel.findOne({ owner: req.userId });
+        
+        // Agar hotel hai but role update nahi hua toh force update karo
+        if (hotel && user.role !== "hotelOwner") {
+            user.role = "hotelOwner";
+            await user.save();
         }
 
         res.json({ 
@@ -26,20 +34,15 @@ export const getUserData = async (req, res) => {
     }
 };
 
-
-// store user recent searched cities
 export const storeRecentSearchedCities = async (req, res) => {
     try {
         const { recentSearchedCity } = req.body;
-        
-        // Database se fresh user nikalo
-        const user = await User.findById(req.userId);
+        const user = await User.findOne({ _id: req.userId });
 
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
 
-        // Array safe check
         if (!user.recentSearchCities) {
             user.recentSearchCities = [];
         }
