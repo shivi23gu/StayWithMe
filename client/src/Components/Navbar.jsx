@@ -81,7 +81,7 @@ const Navbar = () => {
           </Link>
         ))}
 
-        {user && !location.pathname.includes("dashboard") && (
+        {user && (
           <button
             onClick={() => isOwner ? navigate("/dashboard") : setShowHotelReg(true)}
             className={`border px-4 py-1 rounded-full text-sm transition-all ${
@@ -166,5 +166,4 @@ const Navbar = () => {
   );
 };
 
-// FIXED: Added the default export at the bottom
 export default Navbar;
