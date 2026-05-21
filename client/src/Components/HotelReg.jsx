@@ -2,11 +2,9 @@ import React, { useState } from "react";
 import { assets, cities } from "../assets/assets";
 import { useAppContext } from "../context/AppContext.jsx";
 import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router-dom"; // Import navigate for routing
 
 const HotelReg = () => {
   const { setShowHotelReg, axios, getToken, setIsOwner } = useAppContext();
-  const navigate = useNavigate(); // Navigation hook initialized
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -32,8 +30,8 @@ const HotelReg = () => {
         setShowHotelReg(false);
         setIsOwner(true);
         
-        // FIXED: Dono conditions me seedha dashboard page par navigate karega
-        navigate("/dashboard"); 
+        // FIXED: Hard redirect clear and straight to dashboard
+        window.location.replace("/dashboard"); 
       } else {
         toast.error(data?.message || "Registration failed");
       }
