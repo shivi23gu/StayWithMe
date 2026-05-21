@@ -1,45 +1,42 @@
-import React from 'react'
-import { assets } from '../../assets/assets'
-import { NavLink } from 'react-router-dom'
+import React from "react";
+import { NavLink } from "react-router-dom";
 
 const Sidebar = () => {
-
+  // Sidebar ke links aur unke icons ka array
   const sidebarLinks = [
-    { name: "Dashboard", path: "/owner", icon: assets.dashboardIcon },
-    { name: "Add Room", path: "/owner/add-room", icon: assets.addIcon },
-    { name: "List Room", path: "/owner/list-room", icon: assets.listIcon },
-  ]
+    { name: "Dashboard", path: "/owner/dashboard", icon: "📊" },
+    { name: "Add Room", path: "/owner/add-room", icon: "➕" },
+    { name: "List Room", path: "/owner/list-room", icon: "📋" },
+  ];
 
   return (
-    <div className='md:w-64 w-16 border-r h-full text-base border-gray-300 pt-4 flex flex-col transition-all duration-300'>
+    <div className="w-64 min-h-screen bg-white border-r border-gray-100 p-4 flex flex-col gap-2">
+      {/* Brand Logo/Name Panel ke andar */}
+      <div className="mb-8 px-4 py-2">
+        <h2 className="text-xl font-bold text-gray-800">Owner Panel</h2>
+      </div>
 
-      {sidebarLinks.map((item, index) => (
-        <NavLink
-          to={item.path}
-          key={index}
-          end={item.path === "/owner"}
-          className={({ isActive }) =>
-            `flex items-center py-3 px-4 md:px-8 gap-3
-            ${isActive
-              ? "border-r-4 md:border-r-[6px] bg-blue-600/10 border-blue-600 text-blue-600"
-              : "hover:bg-gray-100/90 border-white text-gray-700"}`
-          }
-        >
-          <img
-            src={item.icon}
-            alt={item.name}
-            className='min-h-6 min-w-5'
-          />
-
-          <p className='md:block hidden'>
-            {item.name}
-          </p>
-
-        </NavLink>
-      ))}
-
+      {/* Navigation Links */}
+      <div className="flex flex-col gap-1">
+        {sidebarLinks.map((link, index) => (
+          <NavLink
+            key={index}
+            to={link.path}
+            className={({ isActive }) =>
+              `flex items-center gap-4 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-blue-50 text-blue-600 shadow-sm"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+              }`
+            }
+          >
+            <span>{link.icon}</span>
+            <span>{link.name}</span>
+          </NavLink>
+        ))}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

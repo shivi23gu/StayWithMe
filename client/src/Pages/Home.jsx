@@ -5,17 +5,19 @@ import ExclusiveOffers from '../Components/ExclusiveOffers'
 import Testimonial from '../Components/Testimonial'
 import NewaLetter from '../Components/NewaLetter'
 import Footer from '../Components/Footer'
+import RecommendedHotels from '../Components/RecommendedHotels'
 
 const Home = () => {
-  return (
-    <div>
-      <Hero/>
-      <FeauturedDestination/>
-      <ExclusiveOffers/>
-      <Testimonial/>
-      <NewaLetter/>
-    </div>
-  )
+  return (
+    <div>
+      <Hero/>
+      <RecommendedHotels/>
+      <FeauturedDestination/>
+      <ExclusiveOffers/>
+      <Testimonial/>
+      <NewaLetter/>
+    </div>
+  )
 }
 
 export default Home

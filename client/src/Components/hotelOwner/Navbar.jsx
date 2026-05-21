@@ -11,17 +11,8 @@ const Navbar = () => {
         <img src={assets.logo} alt="logo" className="h-9 invert opacity-80" />
       </Link>
 
-      {/* Right Side */}
+      {/* Right Side - Sirf UserButton, Register Hotel button hataya */}
       <div className="flex items-center gap-4">
-        {/* Register Hotel Button */}
-        <Link
-          to="/register-hotel"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 transition"
-        >
-          Register Hotel
-        </Link>
-
-        {/* User Profile */}
         <UserButton />
       </div>
     </div>
