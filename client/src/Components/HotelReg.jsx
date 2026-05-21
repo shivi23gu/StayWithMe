@@ -4,7 +4,7 @@ import { useAppContext } from "../context/AppContext.jsx";
 import { toast } from "react-hot-toast";
 
 const HotelReg = () => {
-  const { setShowHotelReg, axios, getToken, setIsOwner } = useAppContext();
+  const { setShowHotelReg, axios, getToken, setIsOwner, navigate } = useAppContext();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -26,13 +26,22 @@ const HotelReg = () => {
         toast.success("Hotel Registered Successfully!", { id: "regToast" });
         setIsOwner(true);
         setShowHotelReg(false);
-        window.location.replace("/owner");
+        navigate("/owner");
       } else {
         toast.error(data.message || "Registration failed", { id: "regToast" });
       }
     } catch (error) {
-      const msg = error.response?.data?.message || "Something went wrong";
-      toast.error(msg, { id: "regToast" });
+      const msg = error.response?.data?.message || "";
+
+      // Agar hotel already registered hai → seedha dashboard
+      if (msg.toLowerCase().includes("already")) {
+        toast.success("Redirecting to Dashboard...", { id: "regToast" });
+        setIsOwner(true);
+        setShowHotelReg(false);
+        navigate("/owner");
+      } else {
+        toast.error(msg || "Something went wrong", { id: "regToast" });
+      }
     }
   };
 
