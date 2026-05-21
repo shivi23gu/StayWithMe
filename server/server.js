@@ -14,7 +14,6 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 
-
 // ============================
 // DATABASE CONNECTION
 // ============================
@@ -23,16 +22,7 @@ connectDB();
 const app = express();
 
 // ============================
-// ENV CHECK (remove after fixing)
-// ============================
-console.log("Cloudinary ENV check:", {
-  name: process.env.CLOUDINARY_CLOUD_NAME,
-  key: process.env.CLOUDINARY_API_KEY,
-  secret: process.env.CLOUDINARY_API_SECRET?.slice(0, 5) + "...",
-});
-
-// ============================
-// CORS (Fixed for withCredentials)
+// CORS
 // ============================
 const allowedOrigins = [
   "http://localhost:5173",
@@ -42,8 +32,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // localhost allow karo
-      // aur saare stay-with-me vercel URLs allow karo
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
@@ -60,14 +48,11 @@ app.use(
   })
 );
 
-
 // ============================
 // MIDDLEWARES
 // ============================
 app.use(express.json());
-
 app.use(clerkMiddleware());
-
 
 // ============================
 // TEST ROUTE
@@ -76,32 +61,27 @@ app.get("/", (req, res) => {
   res.send("API is working fine");
 });
 
-
 // ============================
 // CLERK WEBHOOK
 // ============================
 app.use("/api/clerk", clerkWebhooks);
 
-
 // ============================
 // API ROUTES
 // ============================
 app.use("/api/user", userRouter);
-
 app.use("/api/hotels", hotelRouter);
-
 app.use("/api/rooms", roomRouter);
-
 app.use("/api/bookings", bookingRouter);
 
-
 // ============================
-// SERVER
+// LOCAL SERVER (development only)
 // ============================
-const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== "production") {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
-console.log("NEW SERVER FILE RUNNING");
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+export default app;
