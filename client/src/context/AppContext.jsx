@@ -39,25 +39,25 @@ export const AppProvider = ({ children }) => {
     const fetchUser = async () => {
         try {
             const token = await getToken();
-
             const { data } = await axios.get('/api/user', {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
             if (data && data.success) {
-                setIsOwner(data.role === 'hotelOwner'); // ✅ FIXED: 'hotelOwner' not 'owner'
+                setIsOwner(data.role === 'hotelOwner');
                 setSearchedCities(data?.recentSearchedCities || []);
             }
-            // ✅ setTimeout retry hataya — infinite loop band
         } catch (error) {
             const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
             console.error("Error fetching user data:", msg);
+            setIsOwner(false);
         }
     };
 
     useEffect(() => {
         if (user) {
             fetchUser();
+        } else {
+            setIsOwner(false);
         }
     }, [user]);
 
