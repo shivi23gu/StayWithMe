@@ -37,23 +37,29 @@ console.log("Cloudinary ENV check:", {
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
-  "https://stay-with-me-ieip.vercel.app",
-  "https://stay-with-me-jlho.vercel.app",  // 👈 yeh add karo
 ];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      // localhost allow karo
+      // aur saare stay-with-me vercel URLs allow karo
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        /^https:\/\/stay-with-me.*\.vercel\.app$/.test(origin)
+      ) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
       }
     },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-clerk-user-id", "userid"]
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-clerk-user-id", "userid"],
   })
 );
+
 
 // ============================
 // MIDDLEWARES
