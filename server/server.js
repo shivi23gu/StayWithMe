@@ -38,8 +38,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
   "https://stay-with-me-ieip.vercel.app",
+  "https://stay-with-me-jlho.vercel.app",  // 👈 yeh add karo
 ];
-
 app.use(
   cors({
     origin: (origin, callback) => {
