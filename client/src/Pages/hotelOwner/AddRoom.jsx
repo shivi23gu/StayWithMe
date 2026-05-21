@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Title from "../../Components/Title";
 import { assets } from "../../assets/assets";
-import { useAppContext } from "../../context/AppContext.jsx"; 
-import { toast } from "react-hot-toast"; 
+import { useAppContext } from "../../context/AppContext.jsx";
+import { toast } from "react-hot-toast";
 
 const AddRoom = () => {
   const { axios, getToken } = useAppContext();
@@ -29,12 +29,30 @@ const AddRoom = () => {
     }
   };
 
+  // ✅ Cloudinary direct upload function
+  const uploadToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    formData.append("cloud_name", import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: "POST", body: formData }
+    );
+
+    if (!res.ok) throw new Error("Image upload failed");
+
+    const data = await res.json();
+    return data.secure_url;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (!inputs.roomType || !inputs.pricePerNight || !inputs.amenities ||
+      if (!inputs.roomType || !inputs.pricePerNight ||
         !Object.values(images).some(image => image)
       ) {
         setLoading(false);
@@ -42,26 +60,28 @@ const AddRoom = () => {
       }
 
       const token = await getToken();
-      const formData = new FormData();
-      
-      formData.append("roomType", inputs.roomType);
-      formData.append("pricePerNight", inputs.pricePerNight);
 
-      const selectedAmenities = Object.keys(inputs.amenities).filter(
-        (key) => inputs.amenities[key] === true
+      // ✅ Pehle saari images Cloudinary pe upload karo
+      toast.loading("Uploading images...");
+      const imageUrls = await Promise.all(
+        images
+          .filter(img => img !== null)
+          .map(img => uploadToCloudinary(img))
       );
-      formData.append("amenities", JSON.stringify(selectedAmenities));
+      toast.dismiss();
 
-      images.forEach((img) => {
-        if (img) {
-          formData.append("images", img);
-        }
-      });
-
-      const { data } = await axios.post("/api/rooms", formData, {
+      // ✅ Phir sirf URLs backend ko bhejo (no file, no 413 error)
+      const { data } = await axios.post("/api/rooms", {
+        roomType: inputs.roomType,
+        pricePerNight: inputs.pricePerNight,
+        amenities: JSON.stringify(
+          Object.keys(inputs.amenities).filter(key => inputs.amenities[key])
+        ),
+        images: imageUrls,
+      }, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json", // ✅ JSON bhej rahe hain ab
         },
       });
 
@@ -82,8 +102,9 @@ const AddRoom = () => {
         toast.error(data.message || "Failed to create room");
       }
     } catch (error) {
+      toast.dismiss();
       console.error("Room Submission Error:", error.message);
-      toast.error(error.response?.data?.message || "Server Error");
+      toast.error(error.response?.data?.message || error.message || "Server Error");
     } finally {
       setLoading(false);
     }
