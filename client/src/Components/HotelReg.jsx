@@ -10,33 +10,29 @@ const HotelReg = () => {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
 
- const onSubmitHandler = async (event) => {
+  const onSubmitHandler = async (event) => {
     event.preventDefault();
     try {
       const token = await getToken();
-      
-      // Toast dikhaenge aur loading state handle karenge
-      toast.loading("Processing...", { id: "regToast" });
+      toast.loading("Registering...", { id: "regToast" });
 
       const { data } = await axios.post(
         "/api/hotels",
         { name, phone, address, city },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      // Kuch bhi response aaye -> Force Redirect
-      toast.success("Redirecting to dashboard...", { id: "regToast" });
-      setShowHotelReg(false);
-      setIsOwner(true);
-      window.location.replace("/dashboard");
 
+      if (data.success) {
+        toast.success("Hotel Registered Successfully!", { id: "regToast" });
+        setIsOwner(true);
+        setShowHotelReg(false);
+        window.location.replace("/owner");
+      } else {
+        toast.error(data.message || "Registration failed", { id: "regToast" });
+      }
     } catch (error) {
-      // Agar backend error (400, 409, 500) bhi throw kare, toh bhi dashboard bhej do!
-      console.log("Bypassing backend error:", error);
-      toast.success("Redirecting to dashboard...", { id: "regToast" });
-      setShowHotelReg(false);
-      setIsOwner(true);
-      window.location.replace("/dashboard");
+      const msg = error.response?.data?.message || "Something went wrong";
+      toast.error(msg, { id: "regToast" });
     }
   };
 
