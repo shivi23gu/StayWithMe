@@ -31,5 +31,5 @@ const Layout = () => {
     </div>
   )
 }
-
+//navbar
 export default Layout
