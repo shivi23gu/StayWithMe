@@ -25,7 +25,7 @@ const onSubmitHandler = async (event) => {
         toast.success("Welcome to Dashboard!");
         setIsOwner(true); // Isse navbar ka button badal jayega
         setShowHotelReg(false); // Modal close ho jayega
-        navigate("/dashboard"); // Bina page reload kiye dashboard par bhejega
+       navigate("/owner"); // Bina page reload kiye dashboard par bhejega
       } else {
         toast.error(data?.message || "Registration failed");
       }
