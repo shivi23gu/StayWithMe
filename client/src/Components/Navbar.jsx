@@ -26,7 +26,6 @@ const Navbar = () => {
 
   useEffect(() => {
     const checkState = () => {
-      // FIXED: check conditions both for dashboard and owner paths
       if (location.pathname !== "/" && location.pathname !== "/dashboard") {
         setIsScrolled(true);
       } else {
@@ -46,7 +45,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
 
-  // Close menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
@@ -168,4 +166,5 @@ const Navbar = () => {
   );
 };
 
+// FIXED: Added the default export at the bottom
 export default Navbar;
