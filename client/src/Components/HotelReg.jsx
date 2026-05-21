@@ -10,38 +10,27 @@ const HotelReg = () => {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
 
-  const onSubmitHandler = async (event) => {
+const onSubmitHandler = async (event) => {
     event.preventDefault();
     try {
       const token = await getToken();
-      toast.loading("Registering...", { id: "regToast" });
-
       const { data } = await axios.post(
         "/api/hotels",
         { name, phone, address, city },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (data.success) {
-        toast.success("Hotel Registered Successfully!", { id: "regToast" });
-        setIsOwner(true);
-        setShowHotelReg(false);
-        navigate("/owner");
+      
+      // Agar backend register kare ya fir bole already registered hai
+      if ((data && data.success) || data?.message === "Hotel Already Registered") {
+        toast.success("Welcome to Dashboard!");
+        setIsOwner(true); // Isse navbar ka button badal jayega
+        setShowHotelReg(false); // Modal close ho jayega
+        navigate("/dashboard"); // Bina page reload kiye dashboard par bhejega
       } else {
-        toast.error(data.message || "Registration failed", { id: "regToast" });
+        toast.error(data?.message || "Registration failed");
       }
     } catch (error) {
-      const msg = error.response?.data?.message || "";
-
-      // Agar hotel already registered hai → seedha dashboard
-      if (msg.toLowerCase().includes("already")) {
-        toast.success("Redirecting to Dashboard...", { id: "regToast" });
-        setIsOwner(true);
-        setShowHotelReg(false);
-        navigate("/owner");
-      } else {
-        toast.error(msg || "Something went wrong", { id: "regToast" });
-      }
+      toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
     }
   };
 
