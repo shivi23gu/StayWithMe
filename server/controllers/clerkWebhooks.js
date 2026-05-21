@@ -35,6 +35,7 @@ const clerkWebhooks = async (req, res) => {
                 res.json({ success: true, message: "User Updated" });
                 break;
             }
+
             case "user.deleted": {
                 await User.findByIdAndDelete(data.id);
                 res.json({ success: true, message: "User Deleted" });
