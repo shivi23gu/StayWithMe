@@ -14,9 +14,10 @@ export const registerHotel = async (req, res) => {
             return res.json({ success: false, message: "User ID nahi mili request mein" });
         }
 
+        // FIX: Agar hotel pehle se registered hai, toh success true bhejenge taaki frontend dashboard par redirect kar sake
         const existingHotel = await Hotel.findOne({ owner });
         if (existingHotel) {
-            return res.json({ success: false, message: "Hotel Already Registered" });
+            return res.json({ success: true, message: "Hotel Already Registered", alreadyExists: true });
         }
 
         await Hotel.create({ 
@@ -84,7 +85,6 @@ export const getDashboardData = async (req, res) => {
 // FIXED 1: Get Owner Rooms (Absolute Database Bypass)
 export const getOwnerRooms = async (req, res) => {
     try {
-        // Bina kisi token/mismatch filter ke direct database se saare rooms fetch karega
         const rooms = await Room.find({}); 
         
         return res.json({
@@ -113,7 +113,6 @@ export const toggleAvailability = async (req, res) => {
             return res.json({ success: false, message: "Room nahi mila" });
         }
 
-        // True ko false aur false ko true switch karega
         room.isAvailable = room.isAvailable === false ? true : false;
         await room.save();
 
