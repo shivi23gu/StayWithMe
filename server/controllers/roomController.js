@@ -16,16 +16,25 @@ export const createRoom = async (req, res) => {
             return res.json({ success: false, message: "No Hotel found for this owner account" });
         }
 
-        let images = [];
-        if (req.files && req.files.length > 0) {
-            const uploadImages = req.files.map(async (file) => {
-                const response = await cloudinary.uploader.upload(file.path);
-                return response.secure_url;
-            });
-            images = await Promise.all(uploadImages);
-        } else {
+        if (!req.files || req.files.length === 0) {
             return res.json({ success: false, message: "Please upload at least one room image" });
         }
+
+        // Buffer se directly Cloudinary pe upload karo (no disk needed)
+        const uploadImages = req.files.map((file) => {
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    { folder: "hotel-rooms" },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result.secure_url);
+                    }
+                );
+                stream.end(file.buffer); // file.path nahi, file.buffer use karo
+            });
+        });
+
+        const images = await Promise.all(uploadImages);
 
         await Room.create({
             hotel: hotel._id,
@@ -39,7 +48,7 @@ export const createRoom = async (req, res) => {
 
     } catch (error) {
         console.error("Create Room Error:", error.message);
-        res.json({ success: false, message: "Server Error" });
+        res.json({ success: false, message: "Server Error: " + error.message });
     }
 };
 
