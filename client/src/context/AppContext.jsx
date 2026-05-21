@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
 
-const backendUrl = "https://stay-with-me-thvg.vercel.app";
+const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 axios.defaults.baseURL = backendUrl;
 axios.defaults.withCredentials = true;
 
