@@ -19,23 +19,23 @@ const Hero = () => {
   };
 
   return (
-    <div className='relative flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center min-h-screen py-20'>
+    <div className='relative flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center min-h-screen pt-24 pb-10'>
       <div className="absolute inset-0 bg-black/30 -z-0"></div>
 
       <div className="z-10 flex flex-col items-start w-full">
-        <p className="bg-blue-600/80 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+        <p className="bg-blue-600/80 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-4">
           The Ultimate Hotel Experience
         </p>
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold max-w-3xl leading-tight mb-6">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold max-w-3xl leading-tight mb-4">
           Discover Your Perfect <br className="hidden md:block" /> Gateway Destination
         </h1>
-        <p className="text-base md:text-lg opacity-90 max-w-xl leading-relaxed mb-8">
+        <p className="text-base md:text-lg opacity-90 max-w-xl leading-relaxed mb-6">
           Unparalleled luxury and comfort await at the world's most exclusive hotels and resorts. Start your journey today.
         </p>
 
         <form
           onSubmit={handleSearch}
-          className="bg-white text-gray-500 rounded-lg px-6 py-4 flex flex-col md:flex-row max-md:items-start gap-4 w-full md:w-auto"
+          className="bg-white text-gray-500 rounded-lg px-4 py-4 flex flex-col md:flex-row max-md:items-start gap-3 w-full md:w-auto max-h-[70vh] overflow-y-auto md:max-h-none md:overflow-visible"
         >
           <div>
             <div className="flex items-center gap-2">
