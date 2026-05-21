@@ -21,22 +21,25 @@ const HotelReg = () => {
       );
       
       if (data && data.success) {
-        if (data.alreadyExists) {
-          toast.success("Welcome back! Redirecting to dashboard...");
-        } else {
-          toast.success(data.message || "Hotel Registered Successfully!");
-        }
-        
+        toast.success(data.message || "Hotel Registered Successfully!");
         setShowHotelReg(false);
         setIsOwner(true);
-        
-        // FIXED: Hard redirect clear and straight to dashboard
         window.location.replace("/dashboard"); 
       } else {
         toast.error(data?.message || "Registration failed");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
+      const errorMsg = error?.response?.data?.message || error?.message || "";
+      
+      // ABSOLUTE FRONTEND BYPASS: Agar backend error bhejta hai ki already registered hai, toh bhi dashboard bhej do
+      if (errorMsg.includes("Already Registered") || error?.response?.data?.message === "Hotel Already Registered") {
+        toast.success("Welcome back! Redirecting to dashboard...");
+        setShowHotelReg(false);
+        setIsOwner(true);
+        window.location.replace("/dashboard");
+      } else {
+        toast.error(errorMsg || "Something went wrong");
+      }
     }
   };
 
@@ -50,14 +53,12 @@ const HotelReg = () => {
         onClick={(e) => e.stopPropagation()}
         className="flex bg-white rounded-xl w-full max-w-4xl overflow-hidden shadow-2xl"
       >
-        {/* Image - only desktop */}
         <img
           src={assets?.regImage || ""}
           alt="reg-image"
           className="w-1/2 hidden md:block object-cover"
         />
 
-        {/* Form - full width on mobile, half on desktop */}
         <div className="relative flex flex-col w-full md:w-1/2 p-6 md:p-10 overflow-y-auto max-h-[90vh]">
           <img
             src={assets?.closeIcon || ""}
