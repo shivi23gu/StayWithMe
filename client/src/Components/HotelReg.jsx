@@ -10,7 +10,7 @@ const HotelReg = () => {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
 
-const onSubmitHandler = async (event) => {
+  const onSubmitHandler = async (event) => {
     event.preventDefault();
     try {
       const token = await getToken();
@@ -19,13 +19,12 @@ const onSubmitHandler = async (event) => {
         { name, phone, address, city },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      // Agar backend register kare ya fir bole already registered hai
+
       if ((data && data.success) || data?.message === "Hotel Already Registered") {
         toast.success("Welcome to Dashboard!");
-        setIsOwner(true); // Isse navbar ka button badal jayega
-        setShowHotelReg(false); // Modal close ho jayega
-       navigate("/owner"); // Bina page reload kiye dashboard par bhejega
+        setIsOwner(true);
+        setShowHotelReg(false);
+        navigate("/owner");
       } else {
         toast.error(data?.message || "Registration failed");
       }

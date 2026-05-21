@@ -17,12 +17,14 @@ const Navbar = () => {
     { name: "About", path: "/" },
   ];
 
+  // ✅ SIRF EK BAAR useAppContext call karo
+  const { user, navigate, isOwner, setShowHotelReg } = useAppContext();
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const { openSignIn } = useClerk();
   const location = useLocation();
-  const { user, navigate, isOwner, setShowHotelReg } = useAppContext();
 
   useEffect(() => {
     const checkState = () => {
@@ -49,11 +51,13 @@ const Navbar = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
+  const isWhiteBg = isScrolled || location.pathname === "/owner";
+
   return (
     <nav
       className={`fixed top-0 left-0 w-full flex items-center justify-between 
       px-6 md:px-16 lg:px-24 xl:px-32 z-50 transition-all duration-500
-      ${isScrolled || location.pathname === "/owner"
+      ${isWhiteBg
         ? "bg-white/95 shadow-md text-gray-700 backdrop-blur-lg py-2"
         : "bg-transparent text-white py-4"}`}
     >
@@ -63,7 +67,7 @@ const Navbar = () => {
           src={assets.logo}
           alt="logo"
           className={`h-8 md:h-10 w-auto object-contain transition-all duration-300 ${
-            isScrolled || location.pathname === "/owner" ? "brightness-0" : "brightness-0 invert"
+            isWhiteBg ? "brightness-0" : "brightness-0 invert"
           }`}
         />
       </Link>
@@ -74,10 +78,10 @@ const Navbar = () => {
           <Link
             key={i}
             to={link.path}
-            className={`group flex flex-col font-medium ${isScrolled || location.pathname === "/owner" ? "text-gray-700" : "text-white"}`}
+            className={`group flex flex-col font-medium ${isWhiteBg ? "text-gray-700" : "text-white"}`}
           >
             {link.name}
-            <span className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 ${isScrolled || location.pathname === "/owner" ? "bg-gray-700" : "bg-white"}`} />
+            <span className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 ${isWhiteBg ? "bg-gray-700" : "bg-white"}`} />
           </Link>
         ))}
 
@@ -85,7 +89,7 @@ const Navbar = () => {
           <button
             onClick={() => isOwner ? navigate("/owner") : setShowHotelReg(true)}
             className={`border px-4 py-1 rounded-full text-sm transition-all ${
-              isScrolled || location.pathname === "/owner" ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
+              isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
             }`}
           >
             {isOwner ? "Dashboard" : "List Your Hotel"}
@@ -98,7 +102,7 @@ const Navbar = () => {
         <img
           src={assets.searchIcon}
           alt="search"
-          className={`h-5 cursor-pointer ${isScrolled || location.pathname === "/owner" ? "" : "invert"}`}
+          className={`h-5 cursor-pointer ${isWhiteBg ? "" : "invert"}`}
         />
 
         {user ? (
@@ -111,7 +115,7 @@ const Navbar = () => {
           <button
             onClick={openSignIn}
             className={`px-8 py-2 rounded-full font-medium transition-all ${
-              isScrolled || location.pathname === "/owner" ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"
+              isWhiteBg ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"
             }`}
           >
             Login
@@ -121,7 +125,7 @@ const Navbar = () => {
 
       {/* Mobile Hamburger */}
       <button className="md:hidden p-1" onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
-        <img src={assets.menuIcon} alt="menu" className={`h-6 ${isScrolled || location.pathname === "/owner" ? "" : "invert"}`} />
+        <img src={assets.menuIcon} alt="menu" className={`h-6 ${isWhiteBg ? "" : "invert"}`} />
       </button>
 
       {/* Mobile Menu Overlay */}
@@ -147,9 +151,9 @@ const Navbar = () => {
         {user && (
           <button
             className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
-            onClick={() => { setIsMenuOpen(false); navigate(isOwner ? "/owner" : "/my-bookings"); }}
+            onClick={() => { setIsMenuOpen(false); isOwner ? navigate("/owner") : setShowHotelReg(true); }}
           >
-            {isOwner ? "Dashboard" : "My Bookings"}
+            {isOwner ? "Dashboard" : "List Your Hotel"}
           </button>
         )}
 
