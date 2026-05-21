@@ -32,7 +32,7 @@ export const AppProvider = ({ children }) => {
                 toast.error(data.message || "Failed to fetch rooms");
             }
         } catch (error) {
-            toast.error(error.message); // ✅ Fix: data ki jagah error.message
+            toast.error(error.message);
         }
     };
 
@@ -40,21 +40,17 @@ export const AppProvider = ({ children }) => {
         try {
             const token = await getToken();
 
-            const { data } = await axios.get('/api/user', { // ✅ Fix: sahi endpoint
+            const { data } = await axios.get('/api/user', {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
             if (data && data.success) {
-                setIsOwner(data.role === 'owner'); // ✅ Fix: role se isOwner set ho
+                setIsOwner(data.role === 'hotelOwner'); // ✅ FIXED: 'hotelOwner' not 'owner'
                 setSearchedCities(data?.recentSearchedCities || []);
-            } else {
-                setTimeout(() => {
-                    fetchUser();
-                }, 5000);
             }
+            // ✅ setTimeout retry hataya — infinite loop band
         } catch (error) {
             const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
-            toast.error(msg);
             console.error("Error fetching user data:", msg);
         }
     };
