@@ -1,6 +1,6 @@
 import axios from "axios";
-import { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
 
@@ -14,6 +14,7 @@ export const AppProvider = ({ children }) => {
 
     const currency = import.meta.env.VITE_CURRENCY || "$";
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { user } = useUser();
     const { getToken } = useAuth();
@@ -25,6 +26,9 @@ export const AppProvider = ({ children }) => {
     const [searchedCities, setSearchedCities] = useState([]);
     const [rooms, setRooms] = useState([]);
     const [userLoading, setUserLoading] = useState(true);
+
+    // ✅ FIX: Track karo kya ye pehli baar login hai (fresh login) ya sirf page reload
+    const isFirstLogin = useRef(false);
 
     const fetchRooms = async () => {
         try {
@@ -39,7 +43,7 @@ export const AppProvider = ({ children }) => {
         }
     };
 
-    const fetchUser = async () => {
+    const fetchUser = async (shouldRedirect = false) => {
         try {
             setUserLoading(true);
             const token = await getToken();
@@ -52,6 +56,17 @@ export const AppProvider = ({ children }) => {
                 localStorage.setItem("isOwner", owner);
                 if (owner) setShowHotelReg(false);
                 setSearchedCities(data?.recentSearchedCities || []);
+
+                // ✅ FIX: Sirf tab redirect karo jab shouldRedirect = true ho
+                // (yaani fresh login hua ho, na ki sirf page reload)
+                if (shouldRedirect) {
+                    if (owner) {
+                        // Owner hai → Owner Dashboard pe bhejo
+                        navigate("/owner");
+                    }
+                    // Normal user ke liye koi redirect nahi — woh jahan hai wahan raho
+                    // (Home page pe already hoga fresh login ke baad)
+                }
             }
         } catch (error) {
             const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
@@ -64,16 +79,32 @@ export const AppProvider = ({ children }) => {
     };
 
     useEffect(() => {
-    if (user === undefined) return; // Clerk abhi load ho raha hai, wait karo
-    if (user) {
-        fetchUser();
-    } else {
-        setIsOwner(false);
-        localStorage.setItem("isOwner", "false");
-        setShowHotelReg(false);
-        setUserLoading(false);
-    }
-}, [user]);
+        if (user === undefined) return; // Clerk abhi load ho raha hai, wait karo
+
+        if (user) {
+            // ✅ FIX: Pehle check karo kya pehle se logged in tha (localStorage mein user tha)
+            // Agar nahi tha → fresh login → redirect karo
+            const wasLoggedIn = localStorage.getItem("clerkUserId") === user.id;
+
+            if (!wasLoggedIn) {
+                // Fresh login! User ID save karo aur redirect ke saath fetchUser karo
+                localStorage.setItem("clerkUserId", user.id);
+                isFirstLogin.current = true;
+                fetchUser(true); // shouldRedirect = true
+            } else {
+                // Page reload ya tab switch — sirf data fetch karo, redirect mat karo
+                fetchUser(false); // shouldRedirect = false
+            }
+        } else {
+            // Logout ho gaya
+            localStorage.removeItem("clerkUserId");
+            setIsOwner(false);
+            localStorage.setItem("isOwner", "false");
+            setShowHotelReg(false);
+            setUserLoading(false);
+            isFirstLogin.current = false;
+        }
+    }, [user]);
 
     useEffect(() => {
         fetchRooms();
