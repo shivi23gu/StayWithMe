@@ -10,6 +10,7 @@ const MyBookings = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const fetchBookings = async () => {
     try {
@@ -30,8 +31,43 @@ const MyBookings = () => {
     }
   };
 
+  const handlePayment = async (bookingId) => {
+    if (isProcessingPayment) return; // Prevent double submissions
+    
+    try {
+      setIsProcessingPayment(true);
+      const token = await getToken();
+      const { data } = await axios.post('/api/bookings/stripe-payment',
+        { bookingId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (data.success) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
   useEffect(() => {
-    fetchBookings();
+    let isMounted = true;
+    
+    const getInitialData = async () => {
+      if (isMounted) {
+        await fetchBookings();
+      }
+    };
+    
+    getInitialData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handlePaymentClick = (bookingId) => {
@@ -53,22 +89,37 @@ const MyBookings = () => {
   return (
     <div className="py-28 md:pt-32 px-4 md:px-16 lg:px-24 xl:px-32 relative pb-20">
 
-      {/* Payment Modal */}
+      {/* Payment Confirmation Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center">
             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <img src={assets.logo} alt="StayWithMe" className="w-10" />
+              <img src={assets.logo || "🏨"} alt="StayWithMe" className="w-10" />
             </div>
             <h2 className="text-2xl font-playfair font-bold text-gray-900 mb-2">StayWithMe</h2>
             <p className="text-gray-600 mb-2">Proceeding to secure payment gateway.</p>
-            <p className="text-xs text-gray-400 font-mono mb-6">Booking: {selectedBooking}</p>
-            <button
-              onClick={() => setShowModal(false)}
-              className="w-full py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-gray-800 transition-all active:scale-95"
-            >
-              OK
-            </button>
+            <p className="text-xs text-gray-400 font-mono mb-6">Booking ID: {selectedBooking}</p>
+            
+            <div className="flex flex-col gap-2">
+              <button
+                disabled={isProcessingPayment}
+                onClick={async () => {
+                  setShowModal(false);
+                  await handlePayment(selectedBooking);
+                }}
+                className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all active:scale-95 disabled:bg-gray-400 disabled:scale-100"
+              >
+                {isProcessingPayment ? "Connecting..." : "Proceed to Pay"}
+              </button>
+              
+              <button
+                disabled={isProcessingPayment}
+                onClick={() => setShowModal(false)}
+                className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -105,9 +156,10 @@ const MyBookings = () => {
                 {/* Hotel Details */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <img
-                    src={booking.room?.images?.[0]}
-                    alt="hotel"
-                    className="w-full sm:w-40 h-32 rounded-xl shadow-sm object-cover shrink-0"
+                    src={booking.room?.images?.[0] || assets.placeholderImage}
+                    alt="hotel room"
+                    className="w-full sm:w-40 h-32 rounded-xl shadow-sm object-cover shrink-0 bg-gray-100"
+                    onError={(e) => { e.target.src = assets.placeholderImage; }}
                   />
                   <div className="flex flex-col justify-center">
                     <h3 className="font-playfair text-xl md:text-2xl font-semibold text-gray-900">
@@ -118,14 +170,14 @@ const MyBookings = () => {
                     </h3>
                     <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                       <img src={assets.locationIcon} className="w-3" alt="location" />
-                      <span>{booking.hotel?.address || booking.hotel?.city}</span>
+                      <span>{booking.hotel?.address || booking.hotel?.city || "Address unavailable"}</span>
                     </div>
                     <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
                       <img src={assets.guestsIcon} className="w-3" alt="guests" />
                       <span>Guests: {booking.guests}</span>
                     </div>
                     <p className="font-bold text-lg mt-2 text-gray-900">
-                      Total: {currency || "₹"}{(booking.totalPrice).toLocaleString('en-IN')}
+                      Total: {currency || "₹"}{(booking.totalPrice || 0).toLocaleString('en-IN')}
                     </p>
                   </div>
                 </div>
@@ -142,7 +194,7 @@ const MyBookings = () => {
                   </div>
                 </div>
 
-                {/* Payment */}
+                {/* Payment Status & Action */}
                 <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-3">
                   <div className="flex items-center gap-2">
                     <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${booking.isPaid ? 'bg-green-500' : 'bg-red-500'}`}></div>
