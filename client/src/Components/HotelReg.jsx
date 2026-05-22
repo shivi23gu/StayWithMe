@@ -1,137 +1,180 @@
-import React, { useState, useEffect } from "react";
-import { assets, cities } from "../assets/assets";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { assets } from "../assets/assets.js";
+import { useClerk, UserButton } from "@clerk/clerk-react";
 import { useAppContext } from "../context/AppContext.jsx";
-import { toast } from "react-hot-toast";
 
-const HotelReg = () => {
-  const { setShowHotelReg, axios, getToken, setIsOwner, navigate, isOwner } = useAppContext();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
+const BookIcon = () => (
+  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4" />
+  </svg>
+);
 
-  // ✅ FIX: Agar user already owner hai toh form mat dikhao, dashboard pe bhejo
+const Navbar = () => {
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Hotels", path: "/rooms" },
+    { name: "About", path: "/" },
+  ];
+
+  const { user, navigate, isOwner, setShowHotelReg, userLoading } = useAppContext();
+
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const { openSignIn } = useClerk();
+  const location = useLocation();
+
   useEffect(() => {
-    if (isOwner) {
-      setShowHotelReg(false);
-      navigate("/owner");
-    }
-  }, [isOwner]);
-
-  const onSubmitHandler = async (event) => {
-    event.preventDefault();
-    try {
-      const token = await getToken();
-      const { data } = await axios.post(
-        "/api/hotels",
-        { name, phone, address, city },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (data && data.success) {
-        toast.success(data.alreadyExists ? "Welcome back to Dashboard!" : "Hotel Registered Successfully!");
-        setIsOwner(true);
-        setShowHotelReg(false);
-        navigate("/owner");
+    const checkState = () => {
+      if (location.pathname !== "/" && location.pathname !== "/owner") {
+        setIsScrolled(true);
       } else {
-        toast.error(data?.message || "Registration failed");
+        setIsScrolled(window.scrollY > 50 || location.pathname === "/owner");
       }
-    } catch (error) {
-      toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
+    };
+    checkState();
+    const handleScroll = () => {
+      if (location.pathname === "/") {
+        setIsScrolled(window.scrollY > 50);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  const isWhiteBg = isScrolled || location.pathname === "/owner";
+
+  // ✅ FIX: Button ka text/action sirf tab decide karo jab loading complete ho
+  const handleHotelButton = () => {
+    if (userLoading) return; // Loading mein click ignore
+    if (isOwner) {
+      navigate("/owner");
+    } else {
+      setShowHotelReg(true);
     }
   };
 
-  // ✅ FIX: Agar isOwner true hai toh kuch render mat karo (useEffect redirect karega)
-  if (isOwner) return null;
-
   return (
-    <div
-      onClick={() => setShowHotelReg(false)}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+    <nav
+      className={`fixed top-0 left-0 w-full flex items-center justify-between 
+      px-6 md:px-16 lg:px-24 xl:px-32 z-50 transition-all duration-500
+      ${isWhiteBg
+        ? "bg-white/95 shadow-md text-gray-700 backdrop-blur-lg py-2"
+        : "bg-transparent text-white py-4"}`}
     >
-      <form
-        onSubmit={onSubmitHandler}
-        onClick={(e) => e.stopPropagation()}
-        className="flex bg-white rounded-xl w-full max-w-4xl overflow-hidden shadow-2xl"
-      >
+      {/* Logo */}
+      <Link to="/" className="flex items-center">
         <img
-          src={assets?.regImage || ""}
-          alt="reg-image"
-          className="w-1/2 hidden md:block object-cover"
+          src={assets.logo}
+          alt="logo"
+          className={`h-8 md:h-10 w-auto object-contain transition-all duration-300 ${
+            isWhiteBg ? "brightness-0" : "brightness-0 invert"
+          }`}
+        />
+      </Link>
+
+      {/* Desktop Links */}
+      <div className="hidden md:flex items-center gap-8">
+        {navLinks.map((link, i) => (
+          <Link
+            key={i}
+            to={link.path}
+            className={`group flex flex-col font-medium ${isWhiteBg ? "text-gray-700" : "text-white"}`}
+          >
+            {link.name}
+            <span className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 ${isWhiteBg ? "bg-gray-700" : "bg-white"}`} />
+          </Link>
+        ))}
+
+        {user && (
+          <button
+            onClick={handleHotelButton}
+            className={`border px-4 py-1 rounded-full text-sm transition-all ${
+              isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
+            }`}
+          >
+            {/* ✅ FIX: Loading hone tak "..." dikhao, phir sahi label */}
+            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
+          </button>
+        )}
+      </div>
+
+      {/* Desktop Right */}
+      <div className="hidden md:flex items-center gap-4">
+        <img
+          src={assets.searchIcon}
+          alt="search"
+          className={`h-5 cursor-pointer ${isWhiteBg ? "" : "invert"}`}
         />
 
-        <div className="relative flex flex-col w-full md:w-1/2 p-6 md:p-10 overflow-y-auto max-h-[90vh]">
-          <img
-            src={assets?.closeIcon || ""}
-            alt="close"
-            onClick={() => setShowHotelReg(false)}
-            className="absolute top-4 right-4 h-4 w-4 cursor-pointer hover:scale-110 transition-transform"
-          />
-
-          <h2 className="text-xl font-semibold text-gray-800">Register Your Hotel</h2>
-          <p className="text-gray-500 text-sm mt-1 mb-5">Fill in the details to list your property.</p>
-
-          <div className="w-full mb-3">
-            <label className="text-sm font-medium text-gray-500">Hotel Name</label>
-            <input
-              type="text"
-              placeholder="e.g., Grand Plaza"
-              onChange={(e) => setName(e.target.value)}
-              value={name}
-              className="border border-gray-200 rounded w-full px-3 py-2 mt-1 focus:outline-indigo-500 font-light text-sm"
-              required
-            />
-          </div>
-
-          <div className="w-full mb-3">
-            <label className="text-sm font-medium text-gray-500">Phone</label>
-            <input
-              type="text"
-              placeholder="+91 00000 00000"
-              onChange={(e) => setPhone(e.target.value)}
-              value={phone}
-              className="border border-gray-200 rounded w-full px-3 py-2 mt-1 focus:outline-indigo-500 font-light text-sm"
-              required
-            />
-          </div>
-
-          <div className="w-full mb-3">
-            <label className="text-sm font-medium text-gray-500">Address</label>
-            <input
-              type="text"
-              placeholder="Full street address"
-              onChange={(e) => setAddress(e.target.value)}
-              value={address}
-              className="border border-gray-200 rounded w-full px-3 py-2 mt-1 focus:outline-indigo-500 font-light text-sm"
-              required
-            />
-          </div>
-
-          <div className="w-full mb-3">
-            <label className="text-sm font-medium text-gray-500">City</label>
-            <select
-              onChange={(e) => setCity(e.target.value)}
-              value={city}
-              className="border border-gray-200 rounded w-full px-3 py-2 mt-1 focus:outline-indigo-500 font-light bg-white text-sm"
-              required
-            >
-              <option value="">Select City</option>
-              {cities && cities.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
+        {user ? (
+          <UserButton afterSignOutUrl="/">
+            <UserButton.MenuItems>
+              <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => navigate("/my-bookings")} />
+            </UserButton.MenuItems>
+          </UserButton>
+        ) : (
           <button
-            type="submit"
-            className="w-full bg-indigo-500 hover:bg-indigo-600 transition-all text-white px-6 py-2.5 rounded-lg font-medium mt-4 shadow-md active:scale-95"
+            onClick={openSignIn}
+            className={`px-8 py-2 rounded-full font-medium transition-all ${
+              isWhiteBg ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"
+            }`}
           >
-            Register Now
+            Login
           </button>
-        </div>
-      </form>
-    </div>
+        )}
+      </div>
+
+      {/* Mobile Hamburger */}
+      <button className="md:hidden p-1" onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
+        <img src={assets.menuIcon} alt="menu" className={`h-6 ${isWhiteBg ? "" : "invert"}`} />
+      </button>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`fixed top-0 left-0 w-full h-screen bg-white flex flex-col items-center justify-center gap-6 md:hidden transition-transform duration-500 z-[60]
+        ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <button className="absolute top-6 right-6 p-2" onClick={() => setIsMenuOpen(false)} aria-label="Close menu">
+          <img src={assets.closeIcon} alt="close" className="h-7 brightness-0" />
+        </button>
+
+        {navLinks.map((link, i) => (
+          <Link
+            key={i}
+            to={link.path}
+            className="text-black text-2xl font-bold hover:text-indigo-600 transition-colors"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {link.name}
+          </Link>
+        ))}
+
+        {user && (
+          <button
+            className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
+            onClick={() => { setIsMenuOpen(false); handleHotelButton(); }}
+          >
+            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
+          </button>
+        )}
+
+        {!user && (
+          <button
+            onClick={() => { setIsMenuOpen(false); openSignIn(); }}
+            className="bg-black text-white px-10 py-3 rounded-full font-bold hover:bg-gray-800 transition"
+          >
+            Login
+          </button>
+        )}
+      </div>
+    </nav>
   );
 };
 
-export default HotelReg;
+export default Navbar;
