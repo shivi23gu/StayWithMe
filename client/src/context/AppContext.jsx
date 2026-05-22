@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
 
+// ✅ FIX: Har API call mein full backend URL use hogi
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 axios.defaults.baseURL = backendUrl;
 axios.defaults.withCredentials = true;
@@ -22,7 +23,6 @@ export const AppProvider = ({ children }) => {
     const [showHotelReg, setShowHotelReg] = useState(false);
     const [searchedCities, setSearchedCities] = useState([]);
     const [rooms, setRooms] = useState([]);
-    // ✅ FIX: User ka role fetch hone tak loading true rakho
     const [userLoading, setUserLoading] = useState(true);
 
     const fetchRooms = async () => {
@@ -56,7 +56,7 @@ export const AppProvider = ({ children }) => {
             console.error("Error fetching user data:", msg);
             setIsOwner(false);
         } finally {
-            setUserLoading(false); // ✅ Chahe success ho ya error, loading band karo
+            setUserLoading(false);
         }
     };
 
@@ -66,7 +66,7 @@ export const AppProvider = ({ children }) => {
         } else {
             setIsOwner(false);
             setShowHotelReg(false);
-            setUserLoading(false); // ✅ User nahi hai toh bhi loading false
+            setUserLoading(false);
         }
     }, [user]);
 
@@ -93,7 +93,7 @@ export const AppProvider = ({ children }) => {
         fetchUser,
         rooms,
         setRooms,
-        userLoading, // ✅ Export karo
+        userLoading,
     };
 
     return (
