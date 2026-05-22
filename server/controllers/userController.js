@@ -14,7 +14,7 @@ export const getUserData = async (req, res) => {
         }
 
         // FIX: Check karo hotel bhi exist karta hai ya nahi
-        const Hotel = (await import("../models/Hotel.js")).default;
+        const { Hotel } = await import("../models/Hotel.js");
         const hotel = await Hotel.findOne({ owner: req.userId });
         
         // Agar hotel hai but role update nahi hua toh force update karo
