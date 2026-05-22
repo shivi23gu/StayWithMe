@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '../../Components/hotelOwner/Navbar'
 import Sidebar from '../../Components/hotelOwner/Sidebar'
 import { Outlet } from 'react-router-dom'
@@ -6,24 +6,38 @@ import { useAppContext } from '../../context/AppContext'
 
 const Layout = () => {
 
-  const { isOwner, navigate } = useAppContext();
+  const { isOwner, navigate, user } = useAppContext();
+  // ✅ FIX: Wait karo jab tak user load ho — warna isOwner false se false positive redirect hoga
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (!isOwner) {
-      navigate('/')
+    // user load ho gaya, ab check karo
+    if (user !== undefined) {
+      setChecked(true);
     }
-  }, [isOwner])
+  }, [user, isOwner]);
+
+  useEffect(() => {
+    // ✅ Sirf tab redirect karo jab user confirmed logged in hai lekin owner nahi
+    if (checked && user && !isOwner) {
+      navigate('/');
+    }
+    // Agar user logged out hai toh bhi home bhejo
+    if (checked && !user) {
+      navigate('/');
+    }
+  }, [checked, isOwner, user]);
+
+  // ✅ Jab tak check nahi hua, kuch mat dikhao (flicker prevent)
+  if (!checked || !isOwner) return null;
 
   return (
-    // min-h-screen ensures the background/layout always fills the window
     <div className='min-h-screen flex flex-col bg-gray-50'>
       <Navbar />
       
-      {/* flex-1 here tells this container to take all space below the Navbar */}
       <div className='flex flex-1'>
         <Sidebar />
         
-        {/* Added overflow-y-auto so your dashboard content is scrollable */}
         <main className='flex-1 p-4 pt-8 md:px-10 overflow-y-auto'>
            <Outlet />
         </main>
@@ -31,5 +45,5 @@ const Layout = () => {
     </div>
   )
 }
-//navbar chnage
+
 export default Layout

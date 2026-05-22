@@ -1,14 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { assets, cities } from "../assets/assets";
 import { useAppContext } from "../context/AppContext.jsx";
 import { toast } from "react-hot-toast";
 
 const HotelReg = () => {
-  const { setShowHotelReg, axios, getToken, setIsOwner, navigate } = useAppContext();
+  const { setShowHotelReg, axios, getToken, setIsOwner, navigate, isOwner } = useAppContext();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+
+  // ✅ FIX: Agar user already owner hai toh form mat dikhao, dashboard pe bhejo
+  useEffect(() => {
+    if (isOwner) {
+      setShowHotelReg(false);
+      navigate("/owner");
+    }
+  }, [isOwner]);
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
@@ -20,8 +28,8 @@ const HotelReg = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if ((data && data.success) || data?.message === "Hotel Already Registered") {
-        toast.success("Welcome to Dashboard!");
+      if (data && data.success) {
+        toast.success(data.alreadyExists ? "Welcome back to Dashboard!" : "Hotel Registered Successfully!");
         setIsOwner(true);
         setShowHotelReg(false);
         navigate("/owner");
@@ -32,6 +40,9 @@ const HotelReg = () => {
       toast.error(error?.response?.data?.message || error?.message || "Something went wrong");
     }
   };
+
+  // ✅ FIX: Agar isOwner true hai toh kuch render mat karo (useEffect redirect karega)
+  if (isOwner) return null;
 
   return (
     <div

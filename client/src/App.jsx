@@ -18,7 +18,7 @@ import ListRoom from "./Pages/hotelOwner/ListRoom";
 
 const App = () => {
   const isOwnerPath = useLocation().pathname.includes("owner");
-  const { showHotelReg } = useAppContext(); 
+  const { showHotelReg, isOwner, navigate } = useAppContext();
 
   return (
     <div>
@@ -33,7 +33,12 @@ const App = () => {
           <Route path="/rooms" element={<AllRooms />} />
           <Route path="/room/:id" element={<RoomDetails />} />
           <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/register-hotel" element={<HotelReg />} />
+
+          {/* ✅ FIX: /register-hotel pe already owner hai toh dashboard bhejo, warna form dikhao */}
+          <Route
+            path="/register-hotel"
+            element={isOwner ? <Navigate to="/owner" replace /> : <HotelReg />}
+          />
 
           {/* REDIRECT /dashboard to /owner */}
           <Route path="/dashboard" element={<Navigate to="/owner" replace />} />
