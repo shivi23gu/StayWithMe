@@ -11,8 +11,7 @@ axios.defaults.withCredentials = true;
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-
-    const currency = import.meta.env.VITE_CURRENCY || "$";
+    const currency = import.meta.env.VITE_CURRENCY || "₹";
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -27,7 +26,6 @@ export const AppProvider = ({ children }) => {
     const [rooms, setRooms] = useState([]);
     const [userLoading, setUserLoading] = useState(true);
 
-    // ✅ FIX: Track karo kya ye pehli baar login hai (fresh login) ya sirf page reload
     const isFirstLogin = useRef(false);
 
     const fetchRooms = async () => {
@@ -57,15 +55,15 @@ export const AppProvider = ({ children }) => {
                 if (owner) setShowHotelReg(false);
                 setSearchedCities(data?.recentSearchedCities || []);
 
-                // ✅ FIX: Sirf tab redirect karo jab shouldRedirect = true ho
-                // (yaani fresh login hua ho, na ki sirf page reload)
+                // ✅ Fresh login hone pe redirect karo
                 if (shouldRedirect) {
                     if (owner) {
-                        // Owner hai → Owner Dashboard pe bhejo
+                        // Owner → Owner Dashboard
                         navigate("/owner");
+                    } else {
+                        // Normal User → User Dashboard
+                        navigate("/dashboard");
                     }
-                    // Normal user ke liye koi redirect nahi — woh jahan hai wahan raho
-                    // (Home page pe already hoga fresh login ke baad)
                 }
             }
         } catch (error) {
@@ -79,24 +77,22 @@ export const AppProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        if (user === undefined) return; // Clerk abhi load ho raha hai, wait karo
+        if (user === undefined) return;
 
         if (user) {
-            // ✅ FIX: Pehle check karo kya pehle se logged in tha (localStorage mein user tha)
-            // Agar nahi tha → fresh login → redirect karo
             const wasLoggedIn = localStorage.getItem("clerkUserId") === user.id;
 
             if (!wasLoggedIn) {
-                // Fresh login! User ID save karo aur redirect ke saath fetchUser karo
+                // Fresh login → redirect
                 localStorage.setItem("clerkUserId", user.id);
                 isFirstLogin.current = true;
                 fetchUser(true); // shouldRedirect = true
             } else {
-                // Page reload ya tab switch — sirf data fetch karo, redirect mat karo
-                fetchUser(false); // shouldRedirect = false
+                // Page reload → sirf data fetch, redirect nahi
+                fetchUser(false);
             }
         } else {
-            // Logout ho gaya
+            // Logout
             localStorage.removeItem("clerkUserId");
             setIsOwner(false);
             localStorage.setItem("isOwner", "false");
