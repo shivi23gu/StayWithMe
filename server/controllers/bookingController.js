@@ -2,9 +2,9 @@ import transporter from "../configs/nodemailer.js";
 import Booking from "../models/Booking.js";
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
-import stripe from "stripe";
+import Stripe from "stripe";
 
-// Helper Function to Check Availability of Room (Internal use)
+// Helper Function to Check Availability of Room
 const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
     try {
         const bookings = await Booking.find({
@@ -12,13 +12,12 @@ const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
             checkInDate: { $lte: checkOutDate },
             checkOutDate: { $gte: checkInDate },
         });
-        const isAvailable = bookings.length === 0;
-        return isAvailable;
+        return bookings.length === 0;
     } catch (error) {
         console.error("Availability Check Error:", error.message);
         return false;
     }
-}
+};
 
 // API to check availability of room
 export const checkAvailabilityAPI = async (req, res) => {
@@ -29,7 +28,7 @@ export const checkAvailabilityAPI = async (req, res) => {
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
-}
+};
 
 // API to create a new booking
 export const createBooking = async (req, res) => {
@@ -43,7 +42,6 @@ export const createBooking = async (req, res) => {
         }
 
         const hotel = roomData.hotel._id;
-
         const checkIn = new Date(checkInDate);
         const checkOut = new Date(checkOutDate);
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
@@ -64,13 +62,11 @@ export const createBooking = async (req, res) => {
             guests,
         });
 
-        // BUG FIX: email ab authMiddleware se seedha req.user.email mein aata hai
         const recipientEmail = req.user?.email;
         const displayUsername = req.user?.username || "Valued Guest";
 
         if (!recipientEmail) {
             console.error("No email found for user:", req.user?.id);
-            // BUG FIX: Email na mile toh bhi booking success return karo, sirf email skip karo
             return res.json({ success: true, message: "Booking successful", booking: newBooking });
         }
 
@@ -92,19 +88,17 @@ export const createBooking = async (req, res) => {
                 <li><strong>Booking Amount:</strong> ₹${newBooking.totalPrice}</li>
             </ul>
             <p>We look forward to welcoming you!</p>
-            <p>If you need to make any changes, feel free to contact us.</p>
             `
         };
 
         await transporter.sendMail(mailOptions);
-
         res.json({ success: true, message: "Booking successful", booking: newBooking });
 
     } catch (error) {
         console.error("Booking Error:", error.message);
         res.json({ success: false, message: error.message });
     }
-}
+};
 
 // API to get all bookings for a logged-in user
 export const getUserBookings = async (req, res) => {
@@ -117,63 +111,104 @@ export const getUserBookings = async (req, res) => {
     } catch (error) {
         res.json({ success: false, message: "Failed to fetch bookings" });
     }
-}
+};
 
 // API to get bookings for a specific hotel (For Owner)
 export const getHotelBookings = async (req, res) => {
     try {
         const hotel = await Hotel.findOne({ owner: req.user.id });
-
         if (hotel) {
             const bookings = await Booking.find({ hotel: hotel._id })
                 .populate("room user")
                 .sort({ createdAt: -1 });
             return res.json({ success: true, bookings });
         }
-
         res.json({ success: false, message: "No hotel found" });
     } catch (error) {
         res.json({ success: false, message: error.message });
     }
-}
+};
 
-export const stripePayment = async(req, res)=>{
-    try{
-     const {bookingId} = req.body;
-     const booking = await Booking.findById(bookingId);
-     const roomData = await Room.findById(booking.room).populate('hotel');
-     const totalPrice = booking.totalPrice;
-     const {origin} = req.headers;
+// API to create Stripe payment session
+export const stripePayment = async (req, res) => {
+    try {
+        const { bookingId } = req.body;
 
-    const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+            return res.json({ success: false, message: "Booking not found" });
+        }
 
-    const line_items = [
-        {
-            price_data:{
-                currency: "usd",
-                product_data:{
-                    name : roomData.hotel.name,
+        const roomData = await Room.findById(booking.room).populate('hotel');
+        const { origin } = req.headers;
+
+        const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+        const line_items = [
+            {
+                price_data: {
+                    currency: "inr",
+                    product_data: {
+                        name: roomData.hotel.name,
+                    },
+                    // FIX: totalPrice already rupees mein hai, *100 = paise
+                    unit_amount: booking.totalPrice * 100,
                 },
-                unit_amount: totalPrice*100
-            },
-            quantity: 1,
+                quantity: 1,
+            }
+        ];
 
-        }
-    ]
+        const session = await stripeInstance.checkout.sessions.create({
+            line_items,
+            mode: "payment",
+            success_url: `${origin}/loader/my-bookings`,
+            cancel_url: `${origin}/my-bookings`,
+            metadata: { bookingId },
+        });
 
-    //Create Checkout Session
-    const session = await stripeInstance.checkout.sessions.create({
-        line_items,
-        mode: "payment",
-        success_url: `${origin}/loader/my-bookings`,
-        cancel_url: `${origin}/my-bookings`,
-        metadata:{
-            bookingId,
-        }
-    })
-    res.json({success: true, url: session.url})
+        res.json({ success: true, url: session.url });
 
-    }catch(error){
-         res.json({success: false, message: "Payment Failed"})
+    } catch (error) {
+        console.error("Stripe Payment Error:", error.message);
+        res.json({ success: false, message: error.message });
     }
-}
+};
+
+// =============================================
+// STRIPE WEBHOOK — Payment ke baad isPaid=true
+// =============================================
+export const stripeWebhook = async (req, res) => {
+    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const sig = req.headers["stripe-signature"];
+
+    let event;
+
+    try {
+        // Verify webhook signature using raw body
+        event = stripeInstance.webhooks.constructEvent(
+            req.body,
+            sig,
+            process.env.STRIPE_WEBHOOK_SECRET
+        );
+    } catch (err) {
+        console.error("Webhook signature verification failed:", err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Payment successful — booking ko paid mark karo
+    if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        const bookingId = session.metadata?.bookingId;
+
+        if (bookingId) {
+            try {
+                await Booking.findByIdAndUpdate(bookingId, { isPaid: true });
+                console.log(`Booking ${bookingId} marked as paid`);
+            } catch (err) {
+                console.error("Failed to update booking:", err.message);
+            }
+        }
+    }
+
+    res.json({ received: true });
+};

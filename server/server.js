@@ -14,6 +14,9 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 
+// Stripe webhook handler — imported directly
+import { stripeWebhook } from "./controllers/bookingController.js";
+
 // ============================
 // DATABASE CONNECTION
 // ============================
@@ -46,6 +49,17 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-clerk-user-id", "userid"],
   })
+);
+
+// ============================
+// STRIPE WEBHOOK
+// IMPORTANT: raw body chahiye Stripe ko verify karne ke liye
+// isliye express.json() se PEHLE rakha hai
+// ============================
+app.post(
+  "/api/bookings/stripe-webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
 );
 
 // ============================
