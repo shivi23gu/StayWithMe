@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
 
-// ✅ FIX: Har API call mein full backend URL use hogi
 const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 axios.defaults.baseURL = backendUrl;
 axios.defaults.withCredentials = true;
@@ -19,7 +18,9 @@ export const AppProvider = ({ children }) => {
     const { user } = useUser();
     const { getToken } = useAuth();
 
-    const [isOwner, setIsOwner] = useState(false);
+    const [isOwner, setIsOwner] = useState(() => {
+        return localStorage.getItem("isOwner") === "true";
+    });
     const [showHotelReg, setShowHotelReg] = useState(false);
     const [searchedCities, setSearchedCities] = useState([]);
     const [rooms, setRooms] = useState([]);
@@ -48,6 +49,7 @@ export const AppProvider = ({ children }) => {
             if (data && data.success) {
                 const owner = data.role === 'hotelOwner';
                 setIsOwner(owner);
+                localStorage.setItem("isOwner", owner);
                 if (owner) setShowHotelReg(false);
                 setSearchedCities(data?.recentSearchedCities || []);
             }
@@ -55,6 +57,7 @@ export const AppProvider = ({ children }) => {
             const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
             console.error("Error fetching user data:", msg);
             setIsOwner(false);
+            localStorage.setItem("isOwner", "false");
         } finally {
             setUserLoading(false);
         }
@@ -65,6 +68,7 @@ export const AppProvider = ({ children }) => {
             fetchUser();
         } else {
             setIsOwner(false);
+            localStorage.setItem("isOwner", "false");
             setShowHotelReg(false);
             setUserLoading(false);
         }
