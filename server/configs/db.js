@@ -5,7 +5,7 @@ const connectDB = async () => {
  try {
    // options mein dbName daal diya hai taaki sahi database connect ho
    await mongoose.connect(process.env.MONGODB_URI, {
-     dbName: "test"
+     dbName: "hotel-booking"
    });
    console.log("Database Connected to hotel-booking");
  } catch (error) {
