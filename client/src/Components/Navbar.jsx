@@ -17,8 +17,7 @@ const Navbar = () => {
     { name: "About", path: "/" },
   ];
 
-  // ✅ SIRF EK BAAR useAppContext call karo
-  const { user, navigate, isOwner, setShowHotelReg } = useAppContext();
+  const { user, navigate, isOwner, setShowHotelReg, userLoading } = useAppContext();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,15 +33,12 @@ const Navbar = () => {
         setIsScrolled(window.scrollY > 50 || location.pathname === "/owner");
       }
     };
-
     checkState();
-
     const handleScroll = () => {
       if (location.pathname === "/") {
         setIsScrolled(window.scrollY > 50);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
@@ -52,6 +48,16 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const isWhiteBg = isScrolled || location.pathname === "/owner";
+
+  // ✅ FIX: Button ka text/action sirf tab decide karo jab loading complete ho
+  const handleHotelButton = () => {
+    if (userLoading) return; // Loading mein click ignore
+    if (isOwner) {
+      navigate("/owner");
+    } else {
+      setShowHotelReg(true);
+    }
+  };
 
   return (
     <nav
@@ -87,12 +93,13 @@ const Navbar = () => {
 
         {user && (
           <button
-            onClick={() => isOwner ? navigate("/owner") : setShowHotelReg(true)}
+            onClick={handleHotelButton}
             className={`border px-4 py-1 rounded-full text-sm transition-all ${
               isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
             }`}
           >
-            {isOwner ? "Dashboard" : "List Your Hotel"}
+            {/* ✅ FIX: Loading hone tak "..." dikhao, phir sahi label */}
+            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
           </button>
         )}
       </div>
@@ -151,9 +158,9 @@ const Navbar = () => {
         {user && (
           <button
             className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
-            onClick={() => { setIsMenuOpen(false); isOwner ? navigate("/owner") : setShowHotelReg(true); }}
+            onClick={() => { setIsMenuOpen(false); handleHotelButton(); }}
           >
-            {isOwner ? "Dashboard" : "List Your Hotel"}
+            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
           </button>
         )}
 

@@ -22,6 +22,8 @@ export const AppProvider = ({ children }) => {
     const [showHotelReg, setShowHotelReg] = useState(false);
     const [searchedCities, setSearchedCities] = useState([]);
     const [rooms, setRooms] = useState([]);
+    // ✅ FIX: User ka role fetch hone tak loading true rakho
+    const [userLoading, setUserLoading] = useState(true);
 
     const fetchRooms = async () => {
         try {
@@ -38,6 +40,7 @@ export const AppProvider = ({ children }) => {
 
     const fetchUser = async () => {
         try {
+            setUserLoading(true);
             const token = await getToken();
             const { data } = await axios.get('/api/user', {
                 headers: { Authorization: `Bearer ${token}` },
@@ -45,16 +48,15 @@ export const AppProvider = ({ children }) => {
             if (data && data.success) {
                 const owner = data.role === 'hotelOwner';
                 setIsOwner(owner);
-                // ✅ FIX: Agar user owner hai toh registration form band karo
-                if (owner) {
-                    setShowHotelReg(false);
-                }
+                if (owner) setShowHotelReg(false);
                 setSearchedCities(data?.recentSearchedCities || []);
             }
         } catch (error) {
             const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
             console.error("Error fetching user data:", msg);
             setIsOwner(false);
+        } finally {
+            setUserLoading(false); // ✅ Chahe success ho ya error, loading band karo
         }
     };
 
@@ -63,7 +65,8 @@ export const AppProvider = ({ children }) => {
             fetchUser();
         } else {
             setIsOwner(false);
-            setShowHotelReg(false); // ✅ FIX: Logout hone par form band karo
+            setShowHotelReg(false);
+            setUserLoading(false); // ✅ User nahi hai toh bhi loading false
         }
     }, [user]);
 
@@ -71,11 +74,8 @@ export const AppProvider = ({ children }) => {
         fetchRooms();
     }, []);
 
-    // ✅ FIX: isOwner true ho jaaye kisi bhi wajah se → form band
     useEffect(() => {
-        if (isOwner) {
-            setShowHotelReg(false);
-        }
+        if (isOwner) setShowHotelReg(false);
     }, [isOwner]);
 
     const value = {
@@ -92,7 +92,8 @@ export const AppProvider = ({ children }) => {
         setSearchedCities,
         fetchUser,
         rooms,
-        setRooms
+        setRooms,
+        userLoading, // ✅ Export karo
     };
 
     return (
