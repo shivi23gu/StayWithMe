@@ -43,7 +43,12 @@ export const AppProvider = ({ children }) => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             if (data && data.success) {
-                setIsOwner(data.role === 'hotelOwner');
+                const owner = data.role === 'hotelOwner';
+                setIsOwner(owner);
+                // ✅ FIX: Agar user owner hai toh registration form band karo
+                if (owner) {
+                    setShowHotelReg(false);
+                }
                 setSearchedCities(data?.recentSearchedCities || []);
             }
         } catch (error) {
@@ -58,12 +63,20 @@ export const AppProvider = ({ children }) => {
             fetchUser();
         } else {
             setIsOwner(false);
+            setShowHotelReg(false); // ✅ FIX: Logout hone par form band karo
         }
     }, [user]);
 
     useEffect(() => {
         fetchRooms();
     }, []);
+
+    // ✅ FIX: isOwner true ho jaaye kisi bhi wajah se → form band
+    useEffect(() => {
+        if (isOwner) {
+            setShowHotelReg(false);
+        }
+    }, [isOwner]);
 
     const value = {
         currency,
