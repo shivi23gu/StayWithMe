@@ -64,15 +64,16 @@ export const AppProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        if (user) {
-            fetchUser();
-        } else {
-            setIsOwner(false);
-            localStorage.setItem("isOwner", "false");
-            setShowHotelReg(false);
-            setUserLoading(false);
-        }
-    }, [user]);
+    if (user === undefined) return; // Clerk abhi load ho raha hai, wait karo
+    if (user) {
+        fetchUser();
+    } else {
+        setIsOwner(false);
+        localStorage.setItem("isOwner", "false");
+        setShowHotelReg(false);
+        setUserLoading(false);
+    }
+}, [user]);
 
     useEffect(() => {
         fetchRooms();
