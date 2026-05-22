@@ -1,8 +1,8 @@
 import User from "../models/User.js";
+import Hotel from "../models/Hotel.js";
 
 export const getUserData = async (req, res) => {
     try {
-        // FIX: req.userId use karo (authMiddleware yahi set karta hai)
         const user = await User.findOne({ _id: req.userId });
 
         if (!user) {
@@ -13,11 +13,10 @@ export const getUserData = async (req, res) => {
             });
         }
 
-        // FIX: Check karo hotel bhi exist karta hai ya nahi
-        const { Hotel } = await import("../models/Hotel.js");
+        // Check karo hotel exist karta hai ya nahi
         const hotel = await Hotel.findOne({ owner: req.userId });
         
-        // Agar hotel hai but role update nahi hua toh force update karo
+        // Agar hotel hai but role update nahi hua toh fix karo
         if (hotel && user.role !== "hotelOwner") {
             user.role = "hotelOwner";
             await user.save();
