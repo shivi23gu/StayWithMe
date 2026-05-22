@@ -1,180 +1,128 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { assets } from "../assets/assets.js";
-import { useClerk, UserButton } from "@clerk/clerk-react";
+import React, { useState } from "react";
 import { useAppContext } from "../context/AppContext.jsx";
+import { toast } from "react-hot-toast";
 
-const BookIcon = () => (
-  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4" />
-  </svg>
-);
+const HotelReg = () => {
+  const { axios, getToken, setShowHotelReg, setIsOwner, navigate, fetchUser } = useAppContext();
 
-const Navbar = () => {
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Hotels", path: "/rooms" },
-    { name: "About", path: "/" },
-  ];
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    address: "",
+    phone: "",
+    city: "",
+  });
 
-  const { user, navigate, isOwner, setShowHotelReg, userLoading } = useAppContext();
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const { openSignIn } = useClerk();
-  const location = useLocation();
-
-  useEffect(() => {
-    const checkState = () => {
-      if (location.pathname !== "/" && location.pathname !== "/owner") {
-        setIsScrolled(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.address || !form.phone || !form.city) {
+      return toast.error("Please fill all fields");
+    }
+    setLoading(true);
+    try {
+      const token = await getToken();
+      const { data } = await axios.post(
+        "/api/hotels",
+        { name: form.name, address: form.address, phone: form.phone, city: form.city },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (data.success) {
+        toast.success(data.alreadyExists ? "Hotel already registered!" : "Hotel registered successfully!");
+        setIsOwner(true);
+        setShowHotelReg(false);
+        await fetchUser();
+        navigate("/owner");
       } else {
-        setIsScrolled(window.scrollY > 50 || location.pathname === "/owner");
+        toast.error(data.message || "Registration failed");
       }
-    };
-    checkState();
-    const handleScroll = () => {
-      if (location.pathname === "/") {
-        setIsScrolled(window.scrollY > 50);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
-
-  const isWhiteBg = isScrolled || location.pathname === "/owner";
-
-  // ✅ FIX: Button ka text/action sirf tab decide karo jab loading complete ho
-  const handleHotelButton = () => {
-    if (userLoading) return; // Loading mein click ignore
-    if (isOwner) {
-      navigate("/owner");
-    } else {
-      setShowHotelReg(true);
+    } catch (error) {
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <nav
-      className={`fixed top-0 left-0 w-full flex items-center justify-between 
-      px-6 md:px-16 lg:px-24 xl:px-32 z-50 transition-all duration-500
-      ${isWhiteBg
-        ? "bg-white/95 shadow-md text-gray-700 backdrop-blur-lg py-2"
-        : "bg-transparent text-white py-4"}`}
-    >
-      {/* Logo */}
-      <Link to="/" className="flex items-center">
-        <img
-          src={assets.logo}
-          alt="logo"
-          className={`h-8 md:h-10 w-auto object-contain transition-all duration-300 ${
-            isWhiteBg ? "brightness-0" : "brightness-0 invert"
-          }`}
-        />
-      </Link>
-
-      {/* Desktop Links */}
-      <div className="hidden md:flex items-center gap-8">
-        {navLinks.map((link, i) => (
-          <Link
-            key={i}
-            to={link.path}
-            className={`group flex flex-col font-medium ${isWhiteBg ? "text-gray-700" : "text-white"}`}
-          >
-            {link.name}
-            <span className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 ${isWhiteBg ? "bg-gray-700" : "bg-white"}`} />
-          </Link>
-        ))}
-
-        {user && (
-          <button
-            onClick={handleHotelButton}
-            className={`border px-4 py-1 rounded-full text-sm transition-all ${
-              isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
-            }`}
-          >
-            {/* ✅ FIX: Loading hone tak "..." dikhao, phir sahi label */}
-            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
-          </button>
-        )}
-      </div>
-
-      {/* Desktop Right */}
-      <div className="hidden md:flex items-center gap-4">
-        <img
-          src={assets.searchIcon}
-          alt="search"
-          className={`h-5 cursor-pointer ${isWhiteBg ? "" : "invert"}`}
-        />
-
-        {user ? (
-          <UserButton afterSignOutUrl="/">
-            <UserButton.MenuItems>
-              <UserButton.Action label="My Bookings" labelIcon={<BookIcon />} onClick={() => navigate("/my-bookings")} />
-            </UserButton.MenuItems>
-          </UserButton>
-        ) : (
-          <button
-            onClick={openSignIn}
-            className={`px-8 py-2 rounded-full font-medium transition-all ${
-              isWhiteBg ? "bg-black text-white" : "bg-white text-black hover:bg-gray-100"
-            }`}
-          >
-            Login
-          </button>
-        )}
-      </div>
-
-      {/* Mobile Hamburger */}
-      <button className="md:hidden p-1" onClick={() => setIsMenuOpen(true)} aria-label="Open menu">
-        <img src={assets.menuIcon} alt="menu" className={`h-6 ${isWhiteBg ? "" : "invert"}`} />
-      </button>
-
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`fixed top-0 left-0 w-full h-screen bg-white flex flex-col items-center justify-center gap-6 md:hidden transition-transform duration-500 z-[60]
-        ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
-      >
-        <button className="absolute top-6 right-6 p-2" onClick={() => setIsMenuOpen(false)} aria-label="Close menu">
-          <img src={assets.closeIcon} alt="close" className="h-7 brightness-0" />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative">
+        <button
+          onClick={() => setShowHotelReg(false)}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl leading-none"
+        >
+          &times;
         </button>
 
-        {navLinks.map((link, i) => (
-          <Link
-            key={i}
-            to={link.path}
-            className="text-black text-2xl font-bold hover:text-indigo-600 transition-colors"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            {link.name}
-          </Link>
-        ))}
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">List Your Hotel</h2>
+        <p className="text-sm text-gray-500 mb-6">Register your hotel to start accepting bookings.</p>
 
-        {user && (
-          <button
-            className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
-            onClick={() => { setIsMenuOpen(false); handleHotelButton(); }}
-          >
-            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
-          </button>
-        )}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700">Hotel Name</label>
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="e.g. Grand Palace Hotel"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
 
-        {!user && (
+          <div>
+            <label className="text-sm font-medium text-gray-700">Address</label>
+            <input
+              type="text"
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              placeholder="e.g. 12 MG Road, Lucknow"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">City</label>
+            <input
+              type="text"
+              name="city"
+              value={form.city}
+              onChange={handleChange}
+              placeholder="e.g. Lucknow"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">Contact Phone</label>
+            <input
+              type="tel"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="e.g. +91 9876543210"
+              className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+          </div>
+
           <button
-            onClick={() => { setIsMenuOpen(false); openSignIn(); }}
-            className="bg-black text-white px-10 py-3 rounded-full font-bold hover:bg-gray-800 transition"
+            type="submit"
+            disabled={loading}
+            className="mt-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold py-2.5 rounded-lg transition-colors"
           >
-            Login
+            {loading ? "Registering..." : "Register Hotel"}
           </button>
-        )}
+        </form>
       </div>
-    </nav>
+    </div>
   );
 };
 
-export default Navbar;
+export default HotelReg;
