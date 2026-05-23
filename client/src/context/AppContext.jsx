@@ -111,6 +111,7 @@ export const AppProvider = ({ children }) => {
     }, [isOwner]);
 
     const value = {
+         backendUrl,
         currency,
         navigate,
         user,
