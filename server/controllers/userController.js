@@ -1,5 +1,4 @@
 import User from "../models/User.js";
-import Hotel from "../models/Hotel.js";
 
 export const getUserData = async (req, res) => {
     try {
@@ -14,13 +13,6 @@ export const getUserData = async (req, res) => {
                 image: "",
                 recentSearchedCities: [] 
             });
-        }
-
-        const hotel = await Hotel.findOne({ owner: req.userId });
-        
-        if (hotel && user.role !== "hotelOwner") {
-            user.role = "hotelOwner";
-            await user.save();
         }
 
         res.json({ 
