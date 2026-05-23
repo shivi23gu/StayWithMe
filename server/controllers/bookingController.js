@@ -161,8 +161,8 @@ export const stripePayment = async (req, res) => {
             line_items,
             mode: "payment",
             // ✅ CHANGED: success redirect mein bookingId aur sessionId pass ho raha hai
-            success_url: `${origin}/verify-payment?bookingId=${bookingId}&sessionId={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/my-bookings`,
+           success_url: `${origin}/loader/verify-payment?bookingId=${bookingId}&sessionId={CHECKOUT_SESSION_ID}`,
+cancel_url: `${origin}/loader/my-bookings`,
             metadata: { bookingId },
         });
 
