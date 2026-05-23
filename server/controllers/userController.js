@@ -1,51 +1,47 @@
 import User from "../models/User.js";
+import Hotel from "../models/Hotel.js";
 
-export const protect = async (req, res, next) => {
+export const getUserData = async (req, res) => {
     try {
-        const authHeader = req.headers.authorization;
+        const user = await User.findOne({ _id: req.userId });
 
-        if (!authHeader) {
-            return res.json({ success: false, message: "No token provided" });
-        }
-
-        const token = authHeader.split(" ")[1];
-        if (!token) {
-            return res.json({ success: false, message: "Token missing" });
-        }
-
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-
-        if (!decoded || !decoded.sub) {
-            return res.json({ success: false, message: "Invalid token" });
-        }
-
-        let userFromDB = await User.findOne({ _id: decoded.sub });
-
-        // ✅ Naya user hai toh MongoDB mein create karo
-        if (!userFromDB) {
-            userFromDB = await User.create({
-                _id: decoded.sub,
-                username: decoded.name || decoded.username || "User",
-                email: decoded.email || "",
-                image: decoded.image_url || "",
+        if (!user) {
+            return res.json({ 
+                success: true, 
                 role: "user",
-                recentSearchCities: []
+                username: "",
+                email: "",
+                image: "",
+                recentSearchedCities: [] 
             });
-            console.log("✅ New user created in MongoDB:", userFromDB._id);
         }
 
-        req.user = {
-            id: decoded.sub,
-            _id: decoded.sub,
-            email: userFromDB.email,
-            username: userFromDB.username,
-        };
+        const hotel = await Hotel.findOne({ owner: req.userId });
+        
+        if (hotel && user.role !== "hotelOwner") {
+            user.role = "hotelOwner";
+            await user.save();
+        }
 
-        req.userId = decoded.sub;
-        next();
-
+        res.json({ 
+            success: true, 
+            role: user.role || "user",
+            username: user.username,
+            email: user.email,
+            image: user.image,
+            recentSearchedCities: user.recentSearchCities || [] 
+        });
     } catch (error) {
-        console.log("Auth Error:", error.message);
-        return res.json({ success: false, message: "Authentication Failed" });
+        console.error("Get User Data Error:", error.message);
+        res.json({ success: false, message: error.message });
     }
 };
+
+export const storeRecentSearchedCities = async (req, res) => {
+    try {
+        const { recentSearchedCity } = req.body;
+        const user = await User.findOne({ _id: req.userId });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
