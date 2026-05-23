@@ -14,19 +14,12 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 
-// Stripe webhook handler — imported directly
 import { stripeWebhook } from "./controllers/bookingController.js";
 
-// ============================
-// DATABASE CONNECTION
-// ============================
 connectDB();
 
 const app = express();
 
-// ============================
-// CORS
-// ============================
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -51,46 +44,32 @@ app.use(
   })
 );
 
-// ============================
-// STRIPE WEBHOOK
-// IMPORTANT: raw body chahiye Stripe ko verify karne ke liye
-// isliye express.json() se PEHLE rakha hai
-// ============================
+// ✅ Stripe webhook — raw body
 app.post(
   "/api/bookings/stripe-webhook",
   express.raw({ type: "application/json" }),
   stripeWebhook
 );
 
-// ============================
-// MIDDLEWARES
-// ============================
+// ✅ Clerk webhook — raw body
+app.post(
+  "/api/clerk",
+  express.raw({ type: "application/json" }),
+  clerkWebhooks
+);
+
 app.use(express.json());
 app.use(clerkMiddleware());
 
-// ============================
-// TEST ROUTE
-// ============================
 app.get("/", (req, res) => {
   res.send("API is working fine");
 });
 
-// ============================
-// CLERK WEBHOOK
-// ============================
-app.use("/api/clerk", clerkWebhooks);
-
-// ============================
-// API ROUTES
-// ============================
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-// ============================
-// LOCAL SERVER (development only)
-// ============================
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
