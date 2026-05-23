@@ -18,8 +18,7 @@ import OwnerDashboard from "./Pages/hotelOwner/Dashboard";
 import AddRoom from "./Pages/hotelOwner/AddRoom";
 import ListRoom from "./Pages/hotelOwner/ListRoom";
 
-// USER PAGES
-import UserDashboard from "./Pages/UserDashboard";
+]
 
 // ── Protected Route for Standard Users ──────────────────────────────────────
 const ProtectedUserRoute = ({ children }) => {
@@ -92,14 +91,6 @@ const App = () => {
             }
           />
 
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedUserRoute>
-                {isOwner ? <Navigate to="/owner" replace /> : <UserDashboard />}
-              </ProtectedUserRoute>
-            }
-          />
 
           {/* HOTEL REGISTRATION ROUTE */}
           <Route

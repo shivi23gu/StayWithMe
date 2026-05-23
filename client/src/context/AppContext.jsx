@@ -79,13 +79,13 @@ export const AppProvider = ({ children }) => {
         setSearchedCities(data?.recentSearchedCities || []);
 
         // Fresh login redirect
-        if (shouldRedirect) {
-          if (owner) {
-            navigate("/owner");
-          } else {
-            navigate("/dashboard");
-          }
-        }
+       if (shouldRedirect) {
+    if (owner) {
+        navigate("/owner");
+    } else {
+        navigate("/");
+    }
+}
       }
     } catch (error) {
       const msg =
