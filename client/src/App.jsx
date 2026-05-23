@@ -18,7 +18,7 @@ import OwnerDashboard from "./Pages/hotelOwner/Dashboard";
 import AddRoom from "./Pages/hotelOwner/AddRoom";
 import ListRoom from "./Pages/hotelOwner/ListRoom";
 
-]
+
 
 // ── Protected Route for Standard Users ──────────────────────────────────────
 const ProtectedUserRoute = ({ children }) => {
