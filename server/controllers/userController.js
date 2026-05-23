@@ -45,3 +45,22 @@ export const storeRecentSearchedCities = async (req, res) => {
         if (!user) {
             return res.status(404).json({ success: false, message: "User not found" });
         }
+
+        if (!user.recentSearchCities) {
+            user.recentSearchCities = [];
+        }
+
+        if (user.recentSearchCities.length < 3) {
+            user.recentSearchCities.push(recentSearchedCity);
+        } else {
+            user.recentSearchCities.shift();
+            user.recentSearchCities.push(recentSearchedCity);
+        }
+        
+        await user.save();
+        res.json({ success: true, message: "City added" });
+    } catch (error) {
+        console.error("Store City Error:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
