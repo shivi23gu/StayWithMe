@@ -1,139 +1,173 @@
 import axios from "axios";
-import { createContext, useContext, useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import { useNavigate } from "react-router-dom";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { toast } from "react-hot-toast";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const backendUrl =
+  import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
 axios.defaults.baseURL = backendUrl;
 axios.defaults.withCredentials = true;
 
 export const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-    const currency = import.meta.env.VITE_CURRENCY || "₹";
-    const navigate = useNavigate();
-    const location = useLocation();
+  const currency = import.meta.env.VITE_CURRENCY || "₹";
+  const navigate = useNavigate();
 
-    const { user } = useUser();
-    const { getToken } = useAuth();
+  const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
 
-    const [isOwner, setIsOwner] = useState(false);
-    const [showHotelReg, setShowHotelReg] = useState(false);
-    const [searchedCities, setSearchedCities] = useState([]);
-    const [rooms, setRooms] = useState([]);
-    const [userLoading, setUserLoading] = useState(true);
+  // ✅ default false
+  const [isOwner, setIsOwner] = useState(false);
 
-    const isFirstLogin = useRef(false);
+  const [showHotelReg, setShowHotelReg] = useState(false);
+  const [searchedCities, setSearchedCities] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [userLoading, setUserLoading] = useState(true);
 
-    const fetchRooms = async () => {
-        try {
-            const { data } = await axios.get('/api/rooms');
-            if (data.success) {
-                setRooms(data.rooms);
-            } else {
-                toast.error(data.message || "Failed to fetch rooms");
-            }
-        } catch (error) {
-            toast.error(error.message);
+  const isFirstLogin = useRef(false);
+
+  // ---------------- FETCH ROOMS ----------------
+  const fetchRooms = async () => {
+    try {
+      const { data } = await axios.get("/api/rooms");
+
+      if (data.success) {
+        setRooms(data.rooms);
+      } else {
+        toast.error(data.message || "Failed to fetch rooms");
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // ---------------- FETCH USER ----------------
+  const fetchUser = async (shouldRedirect = false) => {
+    try {
+      setUserLoading(true);
+
+      const token = await getToken();
+
+      const { data } = await axios.get("/api/user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // ✅ DEBUG
+      console.log("USER API DATA:", data);
+
+      if (data?.success) {
+        const owner = data.role === "hotelOwner";
+
+        // ✅ set role from backend only
+        setIsOwner(owner);
+
+        if (owner) {
+          setShowHotelReg(false);
         }
-    };
 
-    const fetchUser = async (shouldRedirect = false) => {
-        try {
-            setUserLoading(true);
-            const token = await getToken();
-            const { data } = await axios.get('/api/user', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (data && data.success) {
-                const owner = data.role === 'hotelOwner';
-                setIsOwner(owner);
-              
-                if (owner) setShowHotelReg(false);
-                setSearchedCities(data?.recentSearchedCities || []);
+        setSearchedCities(data?.recentSearchedCities || []);
 
-                // ✅ Fresh login hone pe redirect karo
-                if (shouldRedirect) {
-                    if (owner) {
-                        // Owner → Owner Dashboard
-                        navigate("/owner");
-                    } else {
-                        // Normal User → User Dashboard
-                        navigate("/dashboard");
-                    }
-                }
-            }
-        } catch (error) {
-            const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
-            console.error("Error fetching user data:", msg);
-            setIsOwner(false);
-         
-        } finally {
-            setUserLoading(false);
+        // Fresh login redirect
+        if (shouldRedirect) {
+          if (owner) {
+            navigate("/owner");
+          } else {
+            navigate("/dashboard");
+          }
         }
-    };
+      }
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error fetching user data";
 
-    useEffect(() => {
-        if (user === undefined) return;
+      console.error("Error fetching user data:", msg);
 
-        if (user) {
-            const wasLoggedIn = localStorage.getItem("clerkUserId") === user.id;
+      setIsOwner(false);
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
-            if (!wasLoggedIn) {
-                // Fresh login → redirect
-                localStorage.setItem("clerkUserId", user.id);
-                isFirstLogin.current = true;
-                fetchUser(true); // shouldRedirect = true
-            } else {
-                // Page reload → sirf data fetch, redirect nahi
-                fetchUser(false);
-            }
-        } else {
-            // Logout
-            localStorage.removeItem("clerkUserId");
-            setIsOwner(false);
-          
-            setShowHotelReg(false);
-            setUserLoading(false);
-            isFirstLogin.current = false;
-        }
-    }, [user]);
+  // ---------------- USER EFFECT ----------------
+  useEffect(() => {
+    if (!isLoaded) return;
 
-    useEffect(() => {
-        fetchRooms();
-    }, []);
+    if (user) {
+      const wasLoggedIn =
+        localStorage.getItem("clerkUserId") === user.id;
 
-    useEffect(() => {
-        if (isOwner) setShowHotelReg(false);
-    }, [isOwner]);
+      if (!wasLoggedIn) {
+        localStorage.setItem("clerkUserId", user.id);
 
-    const value = {
-         backendUrl,
-        currency,
-        navigate,
-        user,
-        getToken,
-        isOwner,
-        setIsOwner,
-        axios,
-        showHotelReg,
-        setShowHotelReg,
-        searchedCities,
-        setSearchedCities,
-        fetchUser,
-        rooms,
-        setRooms,
-        userLoading,
-    };
+        isFirstLogin.current = true;
 
-    return (
-        <AppContext.Provider value={value}>
-            {children}
-        </AppContext.Provider>
-    );
+        fetchUser(true);
+      } else {
+        fetchUser(false);
+      }
+    } else {
+      // Logout
+      localStorage.removeItem("clerkUserId");
+
+      setIsOwner(false);
+      setShowHotelReg(false);
+      setUserLoading(false);
+
+      isFirstLogin.current = false;
+    }
+  }, [user, isLoaded]);
+
+  // ---------------- FETCH ROOMS EFFECT ----------------
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  // ---------------- OWNER EFFECT ----------------
+  useEffect(() => {
+    if (isOwner) {
+      setShowHotelReg(false);
+    }
+  }, [isOwner]);
+
+  const value = {
+    backendUrl,
+    currency,
+    navigate,
+    user,
+    getToken,
+    isOwner,
+    setIsOwner,
+    axios,
+    showHotelReg,
+    setShowHotelReg,
+    searchedCities,
+    setSearchedCities,
+    fetchUser,
+    rooms,
+    setRooms,
+    userLoading,
+  };
+
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 };
 
 export const useAppContext = () => {
-    return useContext(AppContext);
+  return useContext(AppContext);
 };
