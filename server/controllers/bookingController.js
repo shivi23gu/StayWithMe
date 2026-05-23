@@ -140,7 +140,9 @@ export const stripePayment = async (req, res) => {
         }
 
         const roomData = await Room.findById(booking.room).populate('hotel');
-        const { origin } = req.headers;
+
+        // ✅ FIX: FRONTEND_URL env variable use karo, fallback origin header
+        const origin = process.env.FRONTEND_URL || req.headers.origin;
 
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -160,9 +162,8 @@ export const stripePayment = async (req, res) => {
         const session = await stripeInstance.checkout.sessions.create({
             line_items,
             mode: "payment",
-            // ✅ CHANGED: success redirect mein bookingId aur sessionId pass ho raha hai
-           success_url: `${origin}/loader/verify-payment?bookingId=${bookingId}&sessionId={CHECKOUT_SESSION_ID}`,
-cancel_url: `${origin}/loader/my-bookings`,
+            success_url: `${origin}/loader/verify-payment?bookingId=${bookingId}&sessionId={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${origin}/loader/my-bookings`,
             metadata: { bookingId },
         });
 
@@ -174,9 +175,7 @@ cancel_url: `${origin}/loader/my-bookings`,
     }
 };
 
-// =============================================
-// VERIFY PAYMENT — Redirect ke baad isPaid=true
-// =============================================
+// API to verify payment after Stripe redirect
 export const verifyPayment = async (req, res) => {
     try {
         const { bookingId, sessionId } = req.body;
@@ -187,7 +186,6 @@ export const verifyPayment = async (req, res) => {
 
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-        // Stripe se session verify karo
         const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
 
         if (session.payment_status === "paid") {
@@ -203,9 +201,7 @@ export const verifyPayment = async (req, res) => {
     }
 };
 
-// =============================================
-// STRIPE WEBHOOK — (backup, agar webhook kaam kare)
-// =============================================
+// STRIPE WEBHOOK
 export const stripeWebhook = async (req, res) => {
     const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
     const sig = req.headers["stripe-signature"];
