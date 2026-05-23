@@ -22,16 +22,17 @@ export const protect = async (req, res, next) => {
         let userFromDB = await User.findOne({ _id: decoded.sub });
 
         // ✅ Naya user hai toh MongoDB mein create karo
-        if (!userFromDB) {
-            userFromDB = await User.create({
-                _id: decoded.sub,
-                username: decoded.name || decoded.username || "User",
-                email: decoded.email || "",
-                image: decoded.image_url || "",
-                role: "user",
-                recentSearchCities: []
-            });
-        }
+    if (!userFromDB) {
+    userFromDB = await User.create({
+        _id: decoded.sub,
+        username: decoded.name || decoded.username || decoded.email?.split("@")[0] || "User",
+        email: decoded.email || "",
+        image: decoded.image_url || decoded.picture || "",  // ✅ fallback
+        role: "user",
+        recentSearchCities: []
+    });
+    console.log("✅ New user created:", userFromDB._id);
+}
 
         req.user = {
             id: decoded.sub,
