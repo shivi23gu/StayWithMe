@@ -1,62 +1,51 @@
 import User from "../models/User.js";
-import Hotel from "../models/Hotel.js";
 
-export const getUserData = async (req, res) => {
+export const protect = async (req, res, next) => {
     try {
-        const user = await User.findOne({ _id: req.userId });
+        const authHeader = req.headers.authorization;
 
-        if (!user) {
-            return res.json({ 
-                success: true, 
+        if (!authHeader) {
+            return res.json({ success: false, message: "No token provided" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        if (!token) {
+            return res.json({ success: false, message: "Token missing" });
+        }
+
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+
+        if (!decoded || !decoded.sub) {
+            return res.json({ success: false, message: "Invalid token" });
+        }
+
+        let userFromDB = await User.findOne({ _id: decoded.sub });
+
+        // ✅ Naya user hai toh MongoDB mein create karo
+        if (!userFromDB) {
+            userFromDB = await User.create({
+                _id: decoded.sub,
+                username: decoded.name || decoded.username || "User",
+                email: decoded.email || "",
+                image: decoded.image_url || "",
                 role: "user",
-                recentSearchedCities: [] 
+                recentSearchCities: []
             });
+            console.log("✅ New user created in MongoDB:", userFromDB._id);
         }
 
-        // Check karo hotel exist karta hai ya nahi
-        const hotel = await Hotel.findOne({ owner: req.userId });
-        
-        // Agar hotel hai but role update nahi hua toh fix karo
-        if (hotel && user.role !== "hotelOwner") {
-            user.role = "hotelOwner";
-            await user.save();
-        }
+        req.user = {
+            id: decoded.sub,
+            _id: decoded.sub,
+            email: userFromDB.email,
+            username: userFromDB.username,
+        };
 
-        res.json({ 
-            success: true, 
-            role: user.role || "user", 
-            recentSearchedCities: user.recentSearchCities || [] 
-        });
+        req.userId = decoded.sub;
+        next();
+
     } catch (error) {
-        console.error("Get User Data Error:", error.message);
-        res.json({ success: false, message: error.message });
-    }
-};
-
-export const storeRecentSearchedCities = async (req, res) => {
-    try {
-        const { recentSearchedCity } = req.body;
-        const user = await User.findOne({ _id: req.userId });
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
-
-        if (!user.recentSearchCities) {
-            user.recentSearchCities = [];
-        }
-
-        if (user.recentSearchCities.length < 3) {
-            user.recentSearchCities.push(recentSearchedCity);
-        } else {
-            user.recentSearchCities.shift();
-            user.recentSearchCities.push(recentSearchedCity);
-        }
-        
-        await user.save();
-        res.json({ success: true, message: "City added" });
-    } catch (error) {
-        console.error("Store City Error:", error.message);
-        res.status(500).json({ success: false, message: error.message });
+        console.log("Auth Error:", error.message);
+        return res.json({ success: false, message: "Authentication Failed" });
     }
 };
