@@ -4,7 +4,6 @@ import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
 import Stripe from "stripe";
 
-// Helper Function to Check Availability of Room
 const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
     try {
         const bookings = await Booking.find({
@@ -19,7 +18,6 @@ const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
     }
 };
 
-// API to check availability of room
 export const checkAvailabilityAPI = async (req, res) => {
     try {
         const { room, checkInDate, checkOutDate } = req.body;
@@ -30,7 +28,6 @@ export const checkAvailabilityAPI = async (req, res) => {
     }
 };
 
-// API to create a new booking
 export const createBooking = async (req, res) => {
     try {
         const { room, checkInDate, checkOutDate, guests } = req.body;
@@ -65,34 +62,38 @@ export const createBooking = async (req, res) => {
         const recipientEmail = req.user?.email;
         const displayUsername = req.user?.username || "Valued Guest";
 
-        if (!recipientEmail) {
-            console.error("No email found for user:", req.user?.id);
-            return res.json({ success: true, message: "Booking successful", booking: newBooking });
+        if (recipientEmail) {
+            const mailOptions = {
+                from: process.env.SENDER_EMAIL,
+                to: recipientEmail,
+                subject: 'Hotel Booking Details',
+                html: `
+                <h2>Your Booking Details</h2>
+                <p>Dear ${displayUsername},</p>
+                <p>Thank you for your booking! Here are your details:</p>
+                <ul>
+                    <li><strong>Booking ID:</strong> ${newBooking._id}</li>
+                    <li><strong>Hotel Name:</strong> ${roomData.hotel.name}</li>
+                    <li><strong>Location:</strong> ${roomData.hotel.address}</li>
+                    <li><strong>Check-In:</strong> ${new Date(newBooking.checkInDate).toDateString()}</li>
+                    <li><strong>Check-Out:</strong> ${new Date(newBooking.checkOutDate).toDateString()}</li>
+                    <li><strong>Nights:</strong> ${nights}</li>
+                    <li><strong>Booking Amount:</strong> ₹${newBooking.totalPrice}</li>
+                </ul>
+                <p>We look forward to welcoming you!</p>
+                `
+            };
+
+            // ✅ Email error ko silently ignore karo
+            try {
+                await transporter.sendMail(mailOptions);
+            } catch (emailError) {
+                console.error("Email send failed:", emailError.message);
+            }
         }
 
-        const mailOptions = {
-            from: process.env.SENDER_EMAIL,
-            to: recipientEmail,
-            subject: 'Hotel Booking Details',
-            html: `
-            <h2>Your Booking Details</h2>
-            <p>Dear ${displayUsername},</p>
-            <p>Thank you for your booking! Here are your details:</p>
-            <ul>
-                <li><strong>Booking ID:</strong> ${newBooking._id}</li>
-                <li><strong>Hotel Name:</strong> ${roomData.hotel.name}</li>
-                <li><strong>Location:</strong> ${roomData.hotel.address}</li>
-                <li><strong>Check-In:</strong> ${new Date(newBooking.checkInDate).toDateString()}</li>
-                <li><strong>Check-Out:</strong> ${new Date(newBooking.checkOutDate).toDateString()}</li>
-                <li><strong>Nights:</strong> ${nights}</li>
-                <li><strong>Booking Amount:</strong> ₹${newBooking.totalPrice}</li>
-            </ul>
-            <p>We look forward to welcoming you!</p>
-            `
-        };
-
-        await transporter.sendMail(mailOptions);
-        res.json({ success: true, message: "Booking successful", booking: newBooking });
+        // ✅ Hamesha success return karo
+        res.json({ success: true, message: "Booking confirmed! 🎉", booking: newBooking });
 
     } catch (error) {
         console.error("Booking Error:", error.message);
@@ -100,7 +101,6 @@ export const createBooking = async (req, res) => {
     }
 };
 
-// API to get all bookings for a logged-in user
 export const getUserBookings = async (req, res) => {
     try {
         const user = req.user._id;
@@ -113,7 +113,6 @@ export const getUserBookings = async (req, res) => {
     }
 };
 
-// API to get bookings for a specific hotel (For Owner)
 export const getHotelBookings = async (req, res) => {
     try {
         const hotel = await Hotel.findOne({ owner: req.user.id });
@@ -129,7 +128,6 @@ export const getHotelBookings = async (req, res) => {
     }
 };
 
-// API to create Stripe payment session
 export const stripePayment = async (req, res) => {
     try {
         const { bookingId } = req.body;
@@ -140,10 +138,7 @@ export const stripePayment = async (req, res) => {
         }
 
         const roomData = await Room.findById(booking.room).populate('hotel');
-
-        // ✅ FIX: FRONTEND_URL env variable use karo, fallback origin header
         const origin = process.env.FRONTEND_URL || req.headers.origin;
-
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
 
         const line_items = [
@@ -175,7 +170,6 @@ export const stripePayment = async (req, res) => {
     }
 };
 
-// API to verify payment after Stripe redirect
 export const verifyPayment = async (req, res) => {
     try {
         const { bookingId, sessionId } = req.body;
@@ -185,7 +179,6 @@ export const verifyPayment = async (req, res) => {
         }
 
         const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
-
         const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
 
         if (session.payment_status === "paid") {
@@ -201,11 +194,9 @@ export const verifyPayment = async (req, res) => {
     }
 };
 
-// STRIPE WEBHOOK
 export const stripeWebhook = async (req, res) => {
     const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
     const sig = req.headers["stripe-signature"];
-
     let event;
 
     try {
