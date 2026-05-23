@@ -62,25 +62,39 @@ const RoomDetails = () => {
     if (!checkIn || !checkOut) { toast.error('Please select check-in and check-out dates'); return; }
     if (new Date(checkIn) >= new Date(checkOut)) { toast.error('Check-out date must be after check-in date'); return; }
     try {
-      setIsLoading(true);
-      const token = await getToken();
-      const { data } = await axios.post('/api/bookings',
-        { room: id, checkInDate: checkIn, checkOutDate: checkOut, guests: Number(guests) },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (data.success) {
-        toast.success('Booking created successfully');
-        navigate('/my-bookings');
-        window.scrollTo(0, 0);
-      } else {
-        toast.error(data.message || 'Booking failed');
-      }
+        setIsLoading(true);
+        const token = await getToken();
+        
+        // Step 1: Booking create karo
+        const { data } = await axios.post('/api/bookings',
+            { room: id, checkInDate: checkIn, checkOutDate: checkOut, guests: Number(guests) },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        if (!data.success) {
+            toast.error(data.message || 'Booking failed');
+            return;
+        }
+
+        // Step 2: Stripe payment session create karo
+        const { data: stripeData } = await axios.post('/api/bookings/stripe-payment',
+            { bookingId: data.booking._id },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (stripeData.success) {
+            // Step 3: Stripe checkout page pe redirect karo
+            window.location.href = stripeData.url;
+        } else {
+            toast.error(stripeData.message || 'Payment failed');
+        }
+
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || 'Booking failed');
+        toast.error(error?.response?.data?.message || error.message || 'Booking failed');
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
 
   // Nights calculation helper
   const calcNights = () => {
