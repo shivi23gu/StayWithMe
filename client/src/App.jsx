@@ -11,6 +11,7 @@ import Layout from "./Pages/hotelOwner/Layout";
 import { Toaster } from 'react-hot-toast';
 import { useAppContext } from "./context/AppContext.jsx";
 import Loader from "./Components/Loader.jsx";
+import VerifyPayment from "./Pages/VerifyPayment.jsx";
 
 // OWNER PAGES
 import OwnerDashboard from "./Pages/hotelOwner/Dashboard";
@@ -59,10 +60,8 @@ const App = () => {
     <div>
       <Toaster />
       
-      {/* Hide default Navbar only on owner control panel screens */}
       {!isOwnerPath && <Navbar />}
       
-      {/* Global context-driven overlay modal registration fallback */}
       {showHotelReg && location.pathname !== "/register-hotel" && <HotelReg />}
 
       <div className="min-h-[70vh]">
@@ -72,6 +71,16 @@ const App = () => {
           <Route path="/rooms" element={<AllRooms />} />
           <Route path="/room/:id" element={<RoomDetails />} />
           <Route path="/loader/:nextUrl" element={<Loader />} />
+
+          {/* VERIFY PAYMENT ROUTE */}
+          <Route
+            path="/verify-payment"
+            element={
+              <ProtectedUserRoute>
+                <VerifyPayment />
+              </ProtectedUserRoute>
+            }
+          />
 
           {/* PROTECTED USER ROUTES */}
           <Route

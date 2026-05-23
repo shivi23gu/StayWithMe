@@ -151,7 +151,6 @@ export const stripePayment = async (req, res) => {
                     product_data: {
                         name: roomData.hotel.name,
                     },
-                    // FIX: totalPrice already rupees mein hai, *100 = paise
                     unit_amount: booking.totalPrice * 100,
                 },
                 quantity: 1,
@@ -161,7 +160,8 @@ export const stripePayment = async (req, res) => {
         const session = await stripeInstance.checkout.sessions.create({
             line_items,
             mode: "payment",
-            success_url: `${origin}/loader/my-bookings`,
+            // ✅ CHANGED: success redirect mein bookingId aur sessionId pass ho raha hai
+            success_url: `${origin}/verify-payment?bookingId=${bookingId}&sessionId={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/my-bookings`,
             metadata: { bookingId },
         });
@@ -175,7 +175,36 @@ export const stripePayment = async (req, res) => {
 };
 
 // =============================================
-// STRIPE WEBHOOK — Payment ke baad isPaid=true
+// VERIFY PAYMENT — Redirect ke baad isPaid=true
+// =============================================
+export const verifyPayment = async (req, res) => {
+    try {
+        const { bookingId, sessionId } = req.body;
+
+        if (!bookingId || !sessionId) {
+            return res.json({ success: false, message: "Missing bookingId or sessionId" });
+        }
+
+        const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+        // Stripe se session verify karo
+        const session = await stripeInstance.checkout.sessions.retrieve(sessionId);
+
+        if (session.payment_status === "paid") {
+            await Booking.findByIdAndUpdate(bookingId, { isPaid: true });
+            return res.json({ success: true, message: "Payment verified and booking updated" });
+        } else {
+            return res.json({ success: false, message: "Payment not completed" });
+        }
+
+    } catch (error) {
+        console.error("Verify Payment Error:", error.message);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+// =============================================
+// STRIPE WEBHOOK — (backup, agar webhook kaam kare)
 // =============================================
 export const stripeWebhook = async (req, res) => {
     const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -184,7 +213,6 @@ export const stripeWebhook = async (req, res) => {
     let event;
 
     try {
-        // Verify webhook signature using raw body
         event = stripeInstance.webhooks.constructEvent(
             req.body,
             sig,
@@ -195,7 +223,6 @@ export const stripeWebhook = async (req, res) => {
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Payment successful — booking ko paid mark karo
     if (event.type === "checkout.session.completed") {
         const session = event.data.object;
         const bookingId = session.metadata?.bookingId;

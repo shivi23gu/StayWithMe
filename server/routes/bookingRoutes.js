@@ -4,7 +4,8 @@ import {
     createBooking,
     getHotelBookings,
     getUserBookings,
-    stripePayment
+    stripePayment,
+    verifyPayment
 } from '../controllers/bookingController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -14,7 +15,7 @@ bookingRouter.post('/check-availability', checkAvailabilityAPI);
 bookingRouter.post('/', protect, createBooking);
 bookingRouter.get('/user', protect, getUserBookings);
 bookingRouter.get('/hotel', protect, getHotelBookings);
-
-bookingRouter.post('/stripe-payment',protect,stripePayment)
+bookingRouter.post('/stripe-payment', protect, stripePayment);
+bookingRouter.post('/verify-payment', protect, verifyPayment);
 
 export default bookingRouter;
