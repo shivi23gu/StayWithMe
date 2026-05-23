@@ -18,9 +18,7 @@ export const AppProvider = ({ children }) => {
     const { user } = useUser();
     const { getToken } = useAuth();
 
-    const [isOwner, setIsOwner] = useState(() => {
-        return localStorage.getItem("isOwner") === "true";
-    });
+    const [isOwner, setIsOwner] = useState(false);
     const [showHotelReg, setShowHotelReg] = useState(false);
     const [searchedCities, setSearchedCities] = useState([]);
     const [rooms, setRooms] = useState([]);
@@ -51,7 +49,7 @@ export const AppProvider = ({ children }) => {
             if (data && data.success) {
                 const owner = data.role === 'hotelOwner';
                 setIsOwner(owner);
-                localStorage.setItem("isOwner", owner);
+              
                 if (owner) setShowHotelReg(false);
                 setSearchedCities(data?.recentSearchedCities || []);
 
@@ -70,7 +68,7 @@ export const AppProvider = ({ children }) => {
             const msg = error?.response?.data?.message || error?.message || "Error fetching user data";
             console.error("Error fetching user data:", msg);
             setIsOwner(false);
-            localStorage.setItem("isOwner", "false");
+         
         } finally {
             setUserLoading(false);
         }
@@ -95,7 +93,7 @@ export const AppProvider = ({ children }) => {
             // Logout
             localStorage.removeItem("clerkUserId");
             setIsOwner(false);
-            localStorage.setItem("isOwner", "false");
+          
             setShowHotelReg(false);
             setUserLoading(false);
             isFirstLogin.current = false;

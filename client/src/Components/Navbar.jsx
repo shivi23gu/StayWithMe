@@ -49,21 +49,13 @@ const Navbar = () => {
 
   const isWhiteBg = isScrolled || location.pathname === "/owner";
 
+  // ✅ FIX: Button ka text/action sirf tab decide karo jab loading complete ho
   const handleHotelButton = () => {
-    if (userLoading) return;
+    if (userLoading) return; // Loading mein click ignore
     if (isOwner) {
       navigate("/owner");
     } else {
       setShowHotelReg(true);
-    }
-  };
-
-  const handleDashboardButton = () => {
-    if (userLoading) return;
-    if (isOwner) {
-      navigate("/owner");
-    } else {
-      navigate("/dashboard");
     }
   };
 
@@ -100,29 +92,15 @@ const Navbar = () => {
         ))}
 
         {user && (
-          <>
-            {/* Dashboard button - owner ke liye owner panel, user ke liye user dashboard */}
-            <button
-              onClick={handleDashboardButton}
-              className={`border px-4 py-1 rounded-full text-sm transition-all ${
-                isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
-              }`}
-            >
-              {userLoading ? "..." : "Dashboard"}
-            </button>
-
-            {/* List Your Hotel - sirf non-owner ke liye */}
-            {!isOwner && !userLoading && (
-              <button
-                onClick={() => setShowHotelReg(true)}
-                className={`border px-4 py-1 rounded-full text-sm transition-all ${
-                  isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
-                }`}
-              >
-                List Your Hotel
-              </button>
-            )}
-          </>
+          <button
+            onClick={handleHotelButton}
+            className={`border px-4 py-1 rounded-full text-sm transition-all ${
+              isWhiteBg ? "border-gray-700 text-gray-700 hover:bg-gray-100" : "border-white text-white hover:bg-white/10"
+            }`}
+          >
+            {/* ✅ FIX: Loading hone tak "..." dikhao, phir sahi label */}
+            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
+          </button>
         )}
       </div>
 
@@ -178,23 +156,12 @@ const Navbar = () => {
         ))}
 
         {user && (
-          <>
-            <button
-              className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
-              onClick={() => { setIsMenuOpen(false); handleDashboardButton(); }}
-            >
-              {userLoading ? "..." : "Dashboard"}
-            </button>
-
-            {!isOwner && !userLoading && (
-              <button
-                className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
-                onClick={() => { setIsMenuOpen(false); setShowHotelReg(true); }}
-              >
-                List Your Hotel
-              </button>
-            )}
-          </>
+          <button
+            className="border-2 border-black px-6 py-2 rounded-full font-bold text-black hover:bg-gray-50 transition"
+            onClick={() => { setIsMenuOpen(false); handleHotelButton(); }}
+          >
+            {userLoading ? "..." : isOwner ? "Dashboard" : "List Your Hotel"}
+          </button>
         )}
 
         {!user && (
