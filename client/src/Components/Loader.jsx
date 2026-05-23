@@ -1,23 +1,25 @@
 import React, { useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 
 const Loader = () => {
   const { navigate } = useAppContext();
   const { nextUrl } = useParams();
+  const location = useLocation();
 
   useEffect(() => {
     if (!nextUrl) return;
 
-    // Decode the URL in case it has slashes or parameters encoded
     const targetPath = decodeURIComponent(nextUrl);
+    
+    // ✅ Query params bhi saath le jao
+    const queryString = location.search;
 
     const timer = setTimeout(() => {
-      // Ensure we don't double up on preceding slashes
-      navigate(targetPath.startsWith('/') ? targetPath : `/${targetPath}`);
+      const fullPath = targetPath.startsWith('/') ? targetPath : `/${targetPath}`;
+      navigate(`${fullPath}${queryString}`);
     }, 8000);
 
-    // CLEANUP: Destroys the timer if the component unmounts mid-wait
     return () => clearTimeout(timer);
   }, [nextUrl, navigate]);
 
