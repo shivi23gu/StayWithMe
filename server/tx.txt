@@ -1,3 +1,0 @@
-Pb6zo9Sgn3RDAAu5
-
-mongodb+srv://guptashivee23_db_user:Pb6zo9Sgn3RDAAu5@cluster0.42mbcfs.mongodb.net/?appName=Cluster0

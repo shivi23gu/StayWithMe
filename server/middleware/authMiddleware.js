@@ -21,7 +21,7 @@ export const protect = async (req, res, next) => {
 
         let userFromDB = await User.findOne({ _id: decoded.sub });
 
-        // ✅ Naya user hai toh MongoDB mein create karo
+        
     if (!userFromDB) {
     userFromDB = await User.create({
         _id: decoded.sub,

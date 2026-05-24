@@ -3,7 +3,6 @@ import User from "../models/User.js";
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 
-// 1. Register Hotel Controller
 export const registerHotel = async (req, res) => {
     try {
         const { name, address, phone, city, userId } = req.body;
@@ -14,7 +13,6 @@ export const registerHotel = async (req, res) => {
             return res.json({ success: false, message: "User ID nahi mili request mein" });
         }
 
-        // FIX: Agar hotel pehle se registered hai, toh success true bhejenge taaki frontend dashboard par redirect kar sake
         const existingHotel = await Hotel.findOne({ owner });
         if (existingHotel) {
             return res.json({ success: true, message: "Hotel Already Registered", alreadyExists: true });
@@ -42,7 +40,6 @@ export const registerHotel = async (req, res) => {
     }
 };
 
-// 2. Get Dashboard Data Controller
 export const getDashboardData = async (req, res) => {
     try {
         const owner = req.userId;
@@ -82,7 +79,6 @@ export const getDashboardData = async (req, res) => {
     }
 };
 
-// FIXED 1: Get Owner Rooms (Absolute Database Bypass)
 export const getOwnerRooms = async (req, res) => {
     try {
         const rooms = await Room.find({}); 
@@ -100,7 +96,6 @@ export const getOwnerRooms = async (req, res) => {
     }
 };
 
-// FIXED 2: Toggle Availability Controller
 export const toggleAvailability = async (req, res) => {
     try {
         const { roomId } = req.body;

@@ -10,23 +10,20 @@ const RecommendedHotels = () => {
   useEffect(() => {
     if (!rooms || rooms.length === 0) return;
 
-    // Koi search nahi ki → saare rooms dikhao
+   
     if (!searchedCities || searchedCities.length === 0) {
       setRecommended(rooms);
       return;
     }
 
-    // Search ki city ke rooms filter karo
     const filtered = rooms.filter(room =>
       room.hotel?.city && searchedCities.includes(room.hotel.city)
     );
 
-    // FIX: Searched city ke rooms nahi hain → section HIDE karo
     setRecommended(filtered);
 
   }, [rooms, searchedCities])
 
-  // Empty → section bilkul nahi dikhega
   if (recommended.length === 0) return null;
 
   return (

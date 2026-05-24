@@ -11,10 +11,9 @@ const clerkWebhooks = async (req, res) => {
             "svix-signature": req.headers["svix-signature"],
         };
 
-        // ✅ Raw body pass karo — JSON.stringify nahi
+       
         await whook.verify(req.body, headers);
 
-        // ✅ Raw body parse karo
         const { data, type } = JSON.parse(req.body);
 
         const userData = {

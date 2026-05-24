@@ -84,7 +84,7 @@ export const createBooking = async (req, res) => {
                 `
             };
 
-            // ✅ Email error ko silently ignore karo
+        
             try {
                 await transporter.sendMail(mailOptions);
             } catch (emailError) {
@@ -92,7 +92,7 @@ export const createBooking = async (req, res) => {
             }
         }
 
-        // ✅ Hamesha success return karo
+     
         res.json({ success: true, message: "Booking confirmed! 🎉", booking: newBooking });
 
     } catch (error) {

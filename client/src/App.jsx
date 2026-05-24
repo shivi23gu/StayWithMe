@@ -13,14 +13,12 @@ import { useAppContext } from "./context/AppContext.jsx";
 import Loader from "./Components/Loader.jsx";
 import VerifyPayment from "./Pages/VerifyPayment.jsx";
 
-// OWNER PAGES
 import OwnerDashboard from "./Pages/hotelOwner/Dashboard";
 import AddRoom from "./Pages/hotelOwner/AddRoom";
 import ListRoom from "./Pages/hotelOwner/ListRoom";
 
 
 
-// ── Protected Route for Standard Users ──────────────────────────────────────
 const ProtectedUserRoute = ({ children }) => {
   const { user, userLoading } = useAppContext();
   
@@ -35,7 +33,6 @@ const ProtectedUserRoute = ({ children }) => {
   return children;
 };
 
-// ── Protected Route for Hotel Owners ────────────────────────────────────────
 const ProtectedOwnerRoute = ({ children }) => {
   const { user, userLoading, isOwner } = useAppContext();
   
@@ -65,13 +62,12 @@ const App = () => {
 
       <div className="min-h-[70vh]">
         <Routes>
-          {/* PUBLIC USER ROUTES */}
+ 
           <Route path="/" element={<Home />} />
           <Route path="/rooms" element={<AllRooms />} />
           <Route path="/room/:id" element={<RoomDetails />} />
           <Route path="/loader/:nextUrl" element={<Loader />} />
 
-          {/* VERIFY PAYMENT ROUTE */}
           <Route
             path="/verify-payment"
             element={
@@ -81,7 +77,6 @@ const App = () => {
             }
           />
 
-          {/* PROTECTED USER ROUTES */}
           <Route
             path="/my-bookings"
             element={
@@ -92,13 +87,11 @@ const App = () => {
           />
 
 
-          {/* HOTEL REGISTRATION ROUTE */}
           <Route
             path="/register-hotel"
             element={isOwner ? <Navigate to="/owner" replace /> : <HotelReg />}
           />
 
-          {/* PROTECTED OWNER PANEL ROUTES */}
           <Route
             path="/owner"
             element={
@@ -113,7 +106,6 @@ const App = () => {
             <Route path="list-room" element={<ListRoom />} />
           </Route>
 
-          {/* 404 CATCH-ALL */}
           <Route path="*" element={<div className="pt-40 text-center text-gray-500 font-medium">Page Not Found</div>} />
         </Routes>
       </div>

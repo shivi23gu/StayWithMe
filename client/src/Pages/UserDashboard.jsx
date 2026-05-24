@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
-// ─── Utility ────────────────────────────────────────────────────────────────
+
 const formatDate = (d) =>
   new Date(d).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -16,7 +16,7 @@ const nights = (cin, cout) =>
     Math.ceil((new Date(cout) - new Date(cin)) / (1000 * 60 * 60 * 24))
   );
 
-// ─── Status Badge ────────────────────────────────────────────────────────────
+
 const StatusBadge = ({ isPaid, status }) => {
   if (isPaid)
     return (
@@ -40,7 +40,6 @@ const StatusBadge = ({ isPaid, status }) => {
   );
 };
 
-// ─── Stat Card ───────────────────────────────────────────────────────────────
 const StatCard = ({ icon, label, value, color }) => {
   const colorMap = {
     blue: "bg-blue-50 text-blue-600",
@@ -61,7 +60,6 @@ const StatCard = ({ icon, label, value, color }) => {
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 const UserDashboard = () => {
   const { axios, getToken, currency, user, navigate } = useAppContext();
   const [bookings, setBookings] = useState([]);
@@ -69,7 +67,7 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("all"); // all | upcoming | past
   const [payModal, setPayModal] = useState(null); // booking id
 
-  // ── Fetch ────────────────────────────────────────────────────────────────
+  
   useEffect(() => {
     (async () => {
       try {
@@ -87,7 +85,7 @@ const UserDashboard = () => {
     })();
   }, []);
 
-  // ── Derived Stats ────────────────────────────────────────────────────────
+ 
   const today = new Date();
   const upcoming = bookings.filter(
     (b) => new Date(b.checkInDate) >= today && b.status !== "cancelled"
@@ -104,7 +102,7 @@ const UserDashboard = () => {
       ? past
       : bookings;
 
-  // ── Loading ──────────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -118,7 +116,7 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Top Banner ─────────────────────────────────────────────────── */}
+      
       <div className="bg-gradient-to-r from-slate-800 to-slate-700 text-white px-6 md:px-12 lg:px-20 py-10">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center gap-5">
           {/* Avatar */}
@@ -144,7 +142,7 @@ const UserDashboard = () => {
             </p>
           </div>
 
-          {/* Quick actions */}
+        
           <div className="flex gap-3 shrink-0">
             <button
               onClick={() => navigate("/rooms")}
@@ -162,7 +160,7 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* ── Main Content ───────────────────────────────────────────────── */}
+     
       <div className="max-w-6xl mx-auto px-4 md:px-8 lg:px-10 py-8">
         {/* Stats Row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
@@ -208,7 +206,7 @@ const UserDashboard = () => {
           />
         </div>
 
-        {/* ── Upcoming Highlight ─────────────────────────────────────── */}
+      
         {upcoming.length > 0 && (
           <div className="mb-10">
             <h2 className="text-lg font-bold text-gray-800 mb-4">
@@ -264,7 +262,7 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* ── Bookings Table ──────────────────────────────────────────── */}
+        
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* Header + Tabs */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-5 border-b border-gray-100">
@@ -289,7 +287,6 @@ const UserDashboard = () => {
             </div>
           </div>
 
-          {/* Table */}
           {displayed.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-4xl mb-3">🏨</p>
@@ -312,7 +309,7 @@ const UserDashboard = () => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              {/* Desktop Table */}
+
               <table className="w-full min-w-[680px] text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 font-semibold text-xs uppercase tracking-wider">
@@ -330,7 +327,7 @@ const UserDashboard = () => {
                       key={booking._id}
                       className="hover:bg-gray-50/60 transition-colors"
                     >
-                      {/* Hotel */}
+
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           {booking.room?.images?.[0] && (
@@ -351,7 +348,6 @@ const UserDashboard = () => {
                         </div>
                       </td>
 
-                      {/* Dates */}
                       <td className="px-6 py-4 text-gray-600">
                         <p>{formatDate(booking.checkInDate)}</p>
                         <p className="text-xs text-gray-400">
@@ -359,18 +355,15 @@ const UserDashboard = () => {
                         </p>
                       </td>
 
-                      {/* Nights */}
                       <td className="px-6 py-4 text-center font-medium text-gray-700">
                         {nights(booking.checkInDate, booking.checkOutDate)}
                       </td>
 
-                      {/* Amount */}
                       <td className="px-6 py-4 text-center font-bold text-gray-800">
                         {currency || "₹"}
                         {(booking.totalPrice || 0).toLocaleString("en-IN")}
                       </td>
 
-                      {/* Status */}
                       <td className="px-6 py-4 text-center">
                         <StatusBadge
                           isPaid={booking.isPaid}
@@ -378,7 +371,6 @@ const UserDashboard = () => {
                         />
                       </td>
 
-                      {/* Action */}
                       <td className="px-6 py-4 text-center">
                         {!booking.isPaid && booking.status !== "cancelled" ? (
                           <button
@@ -399,7 +391,7 @@ const UserDashboard = () => {
           )}
         </div>
 
-        {/* ── Quick Links ─────────────────────────────────────────────── */}
+       
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
           {[
             {
@@ -439,7 +431,7 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* ── Pay Modal ──────────────────────────────────────────────────── */}
+     
       {payModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center">
