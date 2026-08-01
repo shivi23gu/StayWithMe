@@ -1,6 +1,5 @@
 import React from "react";
 import Title from "./Title";
-
 const Testimonial = () => {
   const testimonials = [
     {
@@ -22,14 +21,12 @@ const Testimonial = () => {
       review: "I travel a lot alone, and StayWithMe always has safe, comfortable, and well-located hotels. Highly recommend!",
     },
   ];
-
   return (
-    <div className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 pt-20 pb-32">
+    <div id="testimonials" className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 pt-20 pb-32">
       <Title
         title={"What Our Guests Say"}
         subTitle={"Discover why travelers worldwide choose StayWithMe for the best hotels and unforgettable stays."}
       />
-
       <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-24 pt-24">
         {testimonials.map((t, index) => (
           <div
@@ -47,11 +44,9 @@ const Testimonial = () => {
                 <p className="text-gray-500 font-medium">{t.role}</p>
               </div>
             </div>
-
             <p className="text-gray-600 px-8 text-center leading-relaxed italic">
               "{t.review}"
             </p>
-
             <div className="flex justify-center pt-6">
               <div className="flex gap-1">
                 {[...Array(5)].map((_, starIndex) => (
@@ -77,5 +72,4 @@ const Testimonial = () => {
     </div>
   );
 };
-
 export default Testimonial;
