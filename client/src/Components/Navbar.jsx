@@ -14,7 +14,6 @@ const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Hotels", path: "/rooms" },
-    { name: "About", path: "/" },
   ];
 
   const { user, navigate, isOwner, setShowHotelReg, userLoading } = useAppContext();
@@ -24,6 +23,18 @@ const Navbar = () => {
 
   const { openSignIn } = useClerk();
   const location = useLocation();
+
+  const scrollToTestimonials = () => {
+    setIsMenuOpen(false);
+    if (location.pathname !== "/") {
+      navigate("/");
+      setTimeout(() => {
+        document.getElementById("testimonials")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    } else {
+      document.getElementById("testimonials")?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     const checkState = () => {
@@ -91,6 +102,14 @@ const Navbar = () => {
           </Link>
         ))}
 
+        <button
+          onClick={scrollToTestimonials}
+          className={`group flex flex-col font-medium ${isWhiteBg ? "text-gray-700" : "text-white"}`}
+        >
+          About
+          <span className={`h-0.5 w-0 group-hover:w-full transition-all duration-300 ${isWhiteBg ? "bg-gray-700" : "bg-white"}`} />
+        </button>
+
         {user && (
           <button
             onClick={handleHotelButton}
@@ -154,6 +173,13 @@ const Navbar = () => {
             {link.name}
           </Link>
         ))}
+
+        <button
+          onClick={scrollToTestimonials}
+          className="text-black text-2xl font-bold hover:text-indigo-600 transition-colors"
+        >
+          About
+        </button>
 
         {user && (
           <button
